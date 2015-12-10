@@ -1,6 +1,6 @@
 #! /usr/bin/env bash
 
-: "${ircdir:=$HOME/backtick}"
+: "${ircdir:=$HOME/tick-bot/tick-ii}"
 : "${nickname:=\`}"
 
 if pgrep "ii" > /dev/null
@@ -10,7 +10,10 @@ then
 fi
 
 network="irc.foonetic.net"
-channels=("#test" "lhk")
+channels=(
+    '#test'
+    '#builds'
+)
 
 
 # some privacy please, thanks
@@ -41,7 +44,7 @@ monitor() {
 rm -f "$ircdir/$network/in"
 
 # connect to network - password is set through the env var IIPASS
-ii -i "$ircdir" -n "$nickname" -f "lhk" -k IIPASS -s "$network" &
+ii -i "$ircdir" -n "$nickname" -f "tick-bot" -k IIPASS -s "$network" &
 iid="$!"
 
 # wait for the connection
@@ -53,7 +56,7 @@ while ! test -p "$ircdir/$network/in"; do sleep 1; done
 rm -f "$ircdir/$network/nickserv/out" # clean that up - ident passwd is in there
 
 # join channels
-for channel in $channels; do
+for channel in ${channels[@]}; do
     printf -- "/j %s\n" "$channel" > "$ircdir/$network/in"
     monitor $iid &
     pids+=($!)
@@ -62,4 +65,4 @@ done
 channel="#イヴの時間"
 printf -- "/j %s\n" "$channel" > "$ircdir/$network/in"
 monitor $iid &
-pids+=($!)        
+pids+=($!)

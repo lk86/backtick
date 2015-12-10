@@ -23,26 +23,30 @@ if [[ "$nicks" == "@all" ]]; then
 fi
 
 commands=(
-    help
-    calc
-    echo
+    man
+    bc
     qdb
     grep
     fortune
     ping
     url
+    talkto
     whereami
 )
 
 case "$cmd" in
-    list)
+    man)
         [[ -n "$nicks" ]] && printf -- "%s: %s\n" "$nicks" "${commands[*]}" || printf -- "%s: %s\n" "$nick" "${commands[*]}"
+        echo "For more info, see my source at https://github.com/lk86/iibot"
         ;;
-    calc)
+    bc)
         [[ -n "$extra" ]] && printf -- "%f\n" "$(bc -l <<< "$extra")"
         ;;
-    echo)
-        [[ -n "$nicks" ]] && printf -- "%s: %s\n" "$nicks" "${extra#/}" || printf "%s\n" "${extra#/}"
+    #echo)
+    #    [[ -n "$nicks" ]] && printf -- "%s: %s\n" "$nicks" "${extra#/}" || printf "%s\n" "${extra#/}"
+    #    ;;
+    talkto)
+        printf -- "@talk %s \n" "${extra#/}"
         ;;
     qdb)
         date=`date +%s`
@@ -51,7 +55,8 @@ case "$cmd" in
         #cat $ircd/../qdb/$date
         ;;
     grep)
-        [[ -n "$nicks" ]] && tail `grep -ilh ${extra#/} $ircd/../qdb/*`
+        #[[ -n "$nicks" ]] && tail `grep -ilh ${extra#/} $ircd/../qdb/*`
+        [[ -n "$nicks" ]] && grep -ilh ${extra#/} $ircd/../qdb/*
         ;;
     fortune)
         printf -- "%s\n" "$(fortune -osea)"
@@ -60,19 +65,19 @@ case "$cmd" in
         [[ -n "$nicks" ]] && printf -- "%s: ping!\n" "$nicks" || printf -- "%s: pong!\n" "$nick"
         ;;
     die)
-        if [[ "$nick" =~ ".lhk." ]]
+        if [[ "$nick" =~ .lhk. ]]
         then
             killall ii
         else
-            printf -- "%s: Fuck Off\n" "$nick"
+            printf -- "%s: Go Die\n" "$nick"
         fi
         ;;
     restart)
-        if [[ "$nick" =~ ".lhk." ]]
+        if [[ "$nick" =~ .lhk. ]]
         then
             ./iibot
         else
-            printf -- "%s: Go Die\n" "$nick"
+            printf -- "%s: Fuck Off\n" "$nick"
         fi
         ;;
     url)
