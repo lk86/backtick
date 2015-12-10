@@ -23,12 +23,13 @@ if [[ "$nicks" == "@all" ]]; then
 fi
 
 commands=(
-    list
+    help
     calc
     echo
+    qdb
+    grep
     fortune
     ping
-    slap
     url
     whereami
 )
@@ -43,14 +44,36 @@ case "$cmd" in
     echo)
         [[ -n "$nicks" ]] && printf -- "%s: %s\n" "$nicks" "${extra#/}" || printf "%s\n" "${extra#/}"
         ;;
+    qdb)
+        date=`date +%s`
+        head -n-1 "$ircd/$netw/$chan/out" | tail -n${extra#/} > $ircd/../qdb/$date
+        echo "Added the last ${extra#/} messages to qdb/$date"
+        #cat $ircd/../qdb/$date
+        ;;
+    grep)
+        [[ -n "$nicks" ]] && tail `grep -ilh ${extra#/} $ircd/../qdb/*`
+        ;;
     fortune)
         printf -- "%s\n" "$(fortune -osea)"
         ;;
     ping)
         [[ -n "$nicks" ]] && printf -- "%s: ping!\n" "$nicks" || printf -- "%s: pong!\n" "$nick"
         ;;
-    slap)
-        printf -- "%s slaps %s with %s\n" "$nick" "${nicks:-his cohones}" "${extra:-a large herpderp}"
+    die)
+        if [[ "$nick" =~ ".lhk." ]]
+        then
+            killall ii
+        else
+            printf -- "%s: Fuck Off\n" "$nick"
+        fi
+        ;;
+    restart)
+        if [[ "$nick" =~ ".lhk." ]]
+        then
+            ./iibot
+        else
+            printf -- "%s: Go Die\n" "$nick"
+        fi
         ;;
     url)
         link="$(sed 's;.*\(http[^ ]*\).*;\1;' <<< "$extra")"
@@ -65,7 +88,7 @@ case "$cmd" in
         (( tiny )) && printf -- "%s :: %s\n" "$turl" "$titl" || printf -- "%s\n" "$titl"
         ;;
     whereami)
-        printf -- "%s: this! is! %s!!!!!\n" "$nick" "$chan"
+        printf -- "%s: That's a damn good question. I'm gonna guess %s?\n" "$nick" "$chan"
         ;;
 esac
 
