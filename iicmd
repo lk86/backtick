@@ -34,6 +34,21 @@ commands=(
     whereami
 )
 
+qdb() {
+    if [[ -n $2 ]]
+    then
+        ((first=$1+1))
+        ((num=1+$2-$1))
+    else
+        ((first=1))
+        ((num=$1))
+    fi
+    date=`date +%s`
+    head -n-$first "$ircd/$netw/$chan/out" | tail -n$num > $ircd/../qdb/$date
+    printf -- "Added the %s messages starting with:\n" "$num"
+    head -n1 $ircd/../qdb/$date
+}
+
 case "$cmd" in
     man)
         [[ -n "$nicks" ]] && printf -- "%s: %s\n" "$nicks" "${commands[*]}" || printf -- "%s: %s\n" "$nick" "${commands[*]}"
@@ -49,14 +64,10 @@ case "$cmd" in
         printf -- "@talk %s \n" "${extra#/}"
         ;;
     qdb)
-        date=`date +%s`
-        head -n-1 "$ircd/$netw/$chan/out" | tail -n${extra#/} > $ircd/../qdb/$date
-        echo "Added the last ${extra#/} messages to qdb/$date"
-        #cat $ircd/../qdb/$date
+        qdb ${extra#/}
         ;;
     grep)
-        #[[ -n "$nicks" ]] && tail `grep -ilh ${extra#/} $ircd/../qdb/*`
-        [[ -n "$nicks" ]] && grep -ilh ${extra#/} $ircd/../qdb/*
+        tail `grep -ilh ${extra#/} $ircd/../qdb/*`
         ;;
     fortune)
         printf -- "%s\n" "$(fortune -osea)"
@@ -65,7 +76,7 @@ case "$cmd" in
         [[ -n "$nicks" ]] && printf -- "%s: ping!\n" "$nicks" || printf -- "%s: pong!\n" "$nick"
         ;;
     die)
-        if [[ "$nick" =~ .lhk. ]]
+        if [[ "$nick" == \`lhk\` ]]
         then
             killall ii
         else
@@ -73,7 +84,7 @@ case "$cmd" in
         fi
         ;;
     restart)
-        if [[ "$nick" =~ .lhk. ]]
+        if [[ "$nick" == \`lhk\` ]]
         then
             ./iibot
         else
@@ -82,8 +93,8 @@ case "$cmd" in
         ;;
     url)
         link="$(sed 's;.*\(http[^ ]*\).*;\1;' <<< "$extra")"
-        turl="$(curl -s "http://api.bitly.com/v3/shorten?login=pancakesbot&apiKey=R_ac2adceb07f01d8faca52bb77c67293b&longUrl=${link%#*}&format=txt")"
-        (( ${#link} > 80 )) && tiny=1 || tiny=0
+        #turl="$(curl -s "http://api.bitly.com/v3/shorten?login=pancakesbot&apiKey=R_ac2adceb07f01d8faca52bb77c67293b&longUrl=${link%#*}&format=txt")"
+        #(( ${#link} > 80 )) && tiny=1 || tiny=0
 
         # handle youtube links
         link="$(sed 's;.*youtube\..*v=\([^&]\+\).*;http://youtube.com/embed/\1;' <<< "$link")"
