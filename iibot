@@ -1,12 +1,13 @@
 #! /usr/bin/env bash
 
-: "${ircdir:=$HOME/tick-bot/tick-ii}"
+: "${ircdir:=$HOME/backtick/ii-fifos}"
+: "${botdir:=$HOME/backtick}"
 : "${nickname:=\`}"
 
 if pgrep "ii" > /dev/null
 then
     killall ii
-    sleep 3
+    sleep 5
 fi
 
 network="irc.foonetic.net"
@@ -31,12 +32,25 @@ monitor() {
 
             # if msg contains a url, transform to url command
             [[ "$msg" =~ https?:// ]] && \
-                exec ./iicmd "$nick" "url ${msg#* }" "$ircdir" "$network" "$channel" "$nickname" | fold -w 255 &
+                exec ./iicmd "$nick" "url ${msg#* }" "$botdir" "$network" "$channel" "$nickname" | fold -w 255 &
             # if msg is a command, invoke iicmd
             if echo "$msg" | grep -q '^`.*`$'; then
                 msg=${msg%\`}
-                exec ./iicmd "$nick" "${msg#\`}" "$ircdir" "$network" "$channel" "$nickname" | fold -w 255 &
+                exec ./iicmd "$nick" "${msg#\`}" "$botdir" "$network" "$channel" "$nickname" | fold -w 255 &
             fi
+        done > "$ircdir/$network/$channel/in"
+}
+
+mc-chat() {
+    tail -F -n0 --pid=$1 "$botdir/mc-logs/chat.txt" | \
+        while read -r date time nick 'msg'; do
+            [[ $msg == \`* ]] && printf -- "%s %s \n" "$nick" "${msg#\`}"
+        done > "$ircdir/$network/$channel/in"
+}
+mc-connect() {
+    tail -F -n0 --pid=$1 "$botdir/mc-logs/connections.txt" | \
+        while read -r date time nick status ip; do
+            printf -- "%s %s the server.\n" "$nick" "${status%\.}"
         done > "$ircdir/$network/$channel/in"
 }
 
@@ -44,7 +58,7 @@ monitor() {
 rm -f "$ircdir/$network/in"
 
 # connect to network - password is set through the env var IIPASS
-ii -i "$ircdir" -n "$nickname" -f "tick-bot" -k IIPASS -s "$network" &
+ii -i "$ircdir" -n "$nickname" -u "lhk-bot" -f "backtick" -k IIPASS -s "$network" &
 iid="$!"
 
 # wait for the connection
@@ -62,7 +76,10 @@ for channel in ${channels[@]}; do
     pids+=($!)
 done
 
-channel="#イヴの時間"
-printf -- "/j %s\n" "$channel" > "$ircdir/$network/in"
-monitor $iid &
+channel="#builds"
+mc-chat $iid &
+pids+=($!)
+
+channel="#test"
+mc-connect $iid &
 pids+=($!)

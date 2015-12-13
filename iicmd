@@ -2,7 +2,8 @@
 
 nick="$1"
 mesg="$2"
-ircd="$3"
+botdir="$3"
+ircd=$botdir/..
 netw="$4"
 chan="$5"
 self="$6"
@@ -44,9 +45,9 @@ qdb() {
         ((num=$1))
     fi
     date=`date +%s`
-    head -n-$first "$ircd/$netw/$chan/out" | tail -n$num > $ircd/../qdb/$date
+    head -n-$first "$ircd/$netw/$chan/out" | tail -n$num > $botdir/qdb/$date
     printf -- "Added the %s messages starting with:\n" "$num"
-    head -n1 $ircd/../qdb/$date
+    head -n1 $botdir/qdb/$date
 }
 
 case "$cmd" in
@@ -67,7 +68,7 @@ case "$cmd" in
         qdb ${extra#/}
         ;;
     grep)
-        tail `grep -ilh ${extra#/} $ircd/../qdb/*`
+        tail `grep -ilh ${extra#/} $botdir/qdb/*`
         ;;
     fortune)
         printf -- "%s\n" "$(fortune -osea)"
