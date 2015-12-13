@@ -34,9 +34,9 @@ monitor() {
             [[ "$msg" =~ https?:// ]] && \
                 exec ./iicmd "$nick" "url ${msg#* }" "$botdir" "$network" "$channel" "$nickname" | fold -w 255 &
             # if msg is a command, invoke iicmd
-            if echo "$msg" | grep -q '^`.*`$'; then
-                msg=${msg%\`}
-                exec ./iicmd "$nick" "${msg#\`}" "$botdir" "$network" "$channel" "$nickname" | fold -w 255 &
+            if [[ "$msg" =~ ^\`(.*)\`$ || "$msg" =~ ^\$\((.*)\)$ ]] ; then
+                msg=${BASH_REMATCH[1]}
+                exec ./iicmd "$nick" "$msg" "$botdir" "$network" "$channel" "$nickname" | fold -w 255 &
             fi
         done > "$ircdir/$network/$channel/in"
 }
