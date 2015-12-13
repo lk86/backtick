@@ -12,9 +12,10 @@ then
     sleep 5
 fi
 
-network="irc.foonetic.net"
-channels=(
+[[ -v network ]] || network="irc.foonetic.net"
+[[ -v channels ]] || channels=(
     '#test'
+    '#イヴの時間'
 )
 
 # some privacy please, thanks
