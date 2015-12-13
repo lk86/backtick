@@ -12,10 +12,8 @@ then
     sleep 5
 fi
 
-[[ -v network ]] || network="irc.foonetic.net"
-[[ -v channels ]] || channels=(
-    '#test'
-    '#イヴの時間'
+[[ -v networks ]] || declare -A networks=(
+    [irc.foonetic.net]="#test #イヴの時間"
 )
 
 # some privacy please, thanks
@@ -23,6 +21,7 @@ chmod 700 "$ircdir"
 chmod 600 "$ircdir"/*/ident &>/dev/null
 
 monitor() {
+    echo $ircdir $network $channel
     tail -F -n0 --pid=$1 "$ircdir/$network/$channel/out" | \
         while read -r date time source 'msg'; do
             # if msg is by the system ignore it
@@ -35,7 +34,7 @@ monitor() {
             [[ "$msg" =~ https?:// ]] && \
                 exec ./iicmd "$source" "url ${msg#* }" "$botdir" "$network" "$channel" | fold -w 255 &
             # if msg is a command, invoke iicmd
-            if [[ "$msg" =~ ^\`(.*)\`$ || "$msg" =~ ^\$\((.*)\)$ ]] ; then
+            if [[ "$msg" =~ ^'`'(.*)'`'$ || "$msg" =~ ^'$('(.*)')'$ ]] ; then
                 msg=${BASH_REMATCH[1]}
                 exec ./iicmd "$source" "$msg" "$botdir" "$network" "$channel" | fold -w 255 &
             fi
@@ -55,26 +54,29 @@ mc-connect() {
         done > "$ircdir/$network/$channel/in"
 }
 
-# cleanup
-rm -f "$ircdir/$network/in"
+for network in ${!networks[@]} ; do
+    # cleanup
+    rm -f "$ircdir/$network/in"
 
-# connect to network - password is set through the env var IIPASS
-ii -i "$ircdir" -n "$nickname" -u "lhk-bot" -f "backtick" -k IIPASS -s "$network" &
-iid="$!"
+    # connect to network - password is set through the env var IIPASS
+    ii -i "$ircdir" -n "$nickname" -u "lhk-bot" -f "backtick" -k IIPASS -s "$network" &
+    iid="$!"
 
-# wait for the connection
-while ! test -p "$ircdir/$network/in"; do sleep 1; done
+    # wait for the connection
+    while ! test -p "$ircdir/$network/in"; do sleep 1; done
 
-# auth to services
-[[ -e "$ircdir/$network/ident" ]] && \
-    printf -- "/j nickserv identify %s\n" "$(<"$ircdir/$network/ident")" > "$ircdir/$network/in"
-rm -f "$ircdir/$network/nickserv/out" # clean that up - ident passwd is in there
+    # auth to services
+    [[ -e "$ircdir/$network/ident" ]] && \
+        printf -- "/j nickserv identify %s\n" "$(<"$ircdir/$network/ident")" > "$ircdir/$network/in"
+    rm -f "$ircdir/$network/nickserv/out" # clean that up - ident passwd is in there
 
-# join channels
-for channel in ${channels[@]}; do
-    printf -- "/j %s\n" "$channel" > "$ircdir/$network/in"
-    monitor $iid &
-    pids+=($!)
+    # join channels
+    for channel in ${networks[$network]} ; do
+        echo "chng" $channel
+        printf -- "/j %s\n" "$channel" > "$ircdir/$network/in"
+        monitor $iid &
+        pids+=($!)
+    done
 done
 
 #channel="#builds"
