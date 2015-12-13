@@ -2,11 +2,9 @@
 
 nick="$1"
 mesg="$2"
-botdir="$3"
 ircd=$botdir/..
-netw="$4"
-chan="$5"
-self="$6"
+netw="$3"
+chan="$4"
 
 read -r cmd extra <<< "$mesg"
 if [[ "$mesg" =~ .*\>.+ ]]; then
