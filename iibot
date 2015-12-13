@@ -36,7 +36,7 @@ monitor() {
             # if msg is a command, invoke iicmd
             if echo "$msg" | grep -q '^`.*`$'; then
                 msg=${msg%\`}
-                exec ./iicmd "$nick" "${msg#\`}" "$botdir" "$network" "$channel" "$nickname" | fold -w 255 &
+                exec ./iicmd "$nick" "$msg" "$botdir" "$network" "$channel" "$nickname" | fold -w 255 &
             fi
         done > "$ircdir/$network/$channel/in"
 }
