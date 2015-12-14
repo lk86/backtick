@@ -49,8 +49,8 @@ qdb() {
 
 case "$cmd" in
     man)
-        [[ -n "$nicks" ]] && printf -- "%s: %s\n" "$nicks" "${commands[*]}" || printf -- "%s: %s\n" "$nick" "${commands[*]}"
-        echo "For more info, see my source at https://github.com/lk86/iibot"
+        [[ -n "$nicks" ]] && printf -- "%s: %s\n" "$nicks" "${commands[*]}" || printf -- "%s: %s | " "$nick" "${commands[*]}"
+        echo "See my source at https://github.com/lk86/iibot"
         ;;
     bc)
         [[ -n "$extra" ]] && printf -- "%f\n" "$(bc -l <<< "$extra")"
