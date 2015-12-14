@@ -13,8 +13,8 @@ then
 fi
 
 [[ -v networks ]] || declare -A networks=(
-    [irc.foonetic.net]="#test #イヴの時間"
     [irc.sushigirl.tokyo]="#(•ө•)♡"
+    [irc.foonetic.net]="#builds #test #イヴの時間"
 )
 
 # some privacy please, thanks
@@ -78,10 +78,11 @@ for network in ${!networks[@]} ; do
     done
 done
 
-#channel="#builds"
-#mc-chat $iid &
-#pids+=($!)
-#
-#channel="#test"
-#mc-connect $iid &
-#pids+=($!)
+network="irc.foonetic.net"
+channel="#builds"
+mc-chat $iid &
+pids+=($!)
+
+channel="#test"
+mc-connect $iid &
+pids+=($!)

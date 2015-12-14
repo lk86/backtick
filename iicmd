@@ -2,11 +2,8 @@
 
 nick="$1"
 mesg="$2"
-botdir="$3"
-ircd=$botdir/ii-fifos
-netw="$4"
-chan="$5"
-self="$6"
+netw="$3"
+chan="$4"
 
 read -r cmd extra <<< "$mesg"
 if [[ "$mesg" =~ .*\>.+ ]]; then
@@ -18,7 +15,7 @@ if [[ "$nicks" == "@all" ]]; then
     printf -- "/names %s\n" "$chan"
     nicks=""
     while test -z "$nicks"; do # wait for the response
-        nicks="$(tail -n2 "$ircd/$netw/out" | grep "[[:digit:]-]\+ [[:digit:]:]\+ = $chan" | cut -d" " -f5-)"
+        nicks="$(tail -n2 "$ircdir/$netw/out" | grep "[[:digit:]-]\+ [[:digit:]:]\+ = $chan" | cut -d" " -f5-)"
         sleep .5
     done
 fi
@@ -45,7 +42,7 @@ qdb() {
         ((num=$1))
     fi
     date=`date +%s`
-    head -n-$first "$ircd/$netw/$chan/out" | tail -n$num > $botdir/qdb/$date
+    head -n-$first "$ircdir/$netw/$chan/out" | tail -n$num > $botdir/qdb/$date
     printf -- "Added the %s messages starting with:\n" "$num"
     head -n1 $botdir/qdb/$date
 }
