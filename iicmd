@@ -3,7 +3,7 @@
 nick="$1"
 mesg="$2"
 botdir="$3"
-ircd=$botdir/..
+ircd=$botdir/ii-fifos
 netw="$4"
 chan="$5"
 self="$6"
