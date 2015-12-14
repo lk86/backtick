@@ -27,7 +27,7 @@ monitor() {
             # if msg is by the system ignore it
             [[ "$source" == '-!-' ]] && continue
             # strip < and >. if msg is by ourself ignore it
-            source="${nick:1:-1}"
+            source="${source:1:-1}"
             [[ "$source" == "$nickname" ]] && continue
 
             # if msg contains a url, transform to url command
