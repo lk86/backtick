@@ -4,18 +4,18 @@
 : "${botdir:=$HOME/backtick}"
 : "${nickname:=\`}"
 
+export ircdir botdir nickname
+
 if pgrep "ii" > /dev/null
 then
     killall ii
     sleep 5
 fi
 
-network="irc.foonetic.net"
-channels=(
-    '#test'
-    '#builds'
+[[ -v networks ]] || declare -A networks=(
+    [irc.foonetic.net]="#test #イヴの時間"
+    [irc.sushigirl.tokyo]="#(•ө•)♡"
 )
-
 
 # some privacy please, thanks
 chmod 700 "$ircdir"
@@ -23,20 +23,20 @@ chmod 600 "$ircdir"/*/ident &>/dev/null
 
 monitor() {
     tail -F -n0 --pid=$1 "$ircdir/$network/$channel/out" | \
-        while read -r date time nick 'msg'; do
+        while read -r date time source 'msg'; do
             # if msg is by the system ignore it
-            [[ "$nick" == '-!-' ]] && continue
+            [[ "$source" == '-!-' ]] && continue
             # strip < and >. if msg is by ourself ignore it
-            nick="${nick:1:-1}"
-            [[ "$nick" == "$nickname" ]] && continue
+            source="${nick:1:-1}"
+            [[ "$source" == "$nickname" ]] && continue
 
             # if msg contains a url, transform to url command
             [[ "$msg" =~ https?:// ]] && \
-                exec ./iicmd "$nick" "url ${msg#* }" "$botdir" "$network" "$channel" "$nickname" | fold -w 255 &
+                exec ./iicmd "$source" "url ${msg#* }" "$network" "$channel" | fold -w 255 &
             # if msg is a command, invoke iicmd
-            if [[ "$msg" =~ ^\`(.*)\`$ || "$msg" =~ ^\$\((.*)\)$ ]] ; then
+            if [[ "$msg" =~ ^'`'(.*)'`'$ || "$msg" =~ ^'$('(.*)')'$ ]] ; then
                 msg=${BASH_REMATCH[1]}
-                exec ./iicmd "$nick" "$msg" "$botdir" "$network" "$channel" "$nickname" | fold -w 255 &
+                exec ./iicmd "$source" "$msg" "$network" "$channel" | fold -w 255 &
             fi
         done > "$ircdir/$network/$channel/in"
 }
@@ -54,32 +54,34 @@ mc-connect() {
         done > "$ircdir/$network/$channel/in"
 }
 
-# cleanup
-rm -f "$ircdir/$network/in"
+for network in ${!networks[@]} ; do
+    # cleanup
+    rm -f "$ircdir/$network/in"
 
-# connect to network - password is set through the env var IIPASS
-ii -i "$ircdir" -n "$nickname" -u "lhk-bot" -f "backtick" -k IIPASS -s "$network" &
-iid="$!"
+    # connect to network - password is set through the env var IIPASS
+    ii -i "$ircdir" -n "$nickname" -u "lhk-bot" -f "backtick" -k IIPASS -s "$network" &
+    iid="$!"
 
-# wait for the connection
-while ! test -p "$ircdir/$network/in"; do sleep 1; done
+    # wait for the connection
+    while ! test -p "$ircdir/$network/in"; do sleep 1; done
 
-# auth to services
-[[ -e "$ircdir/$network/ident" ]] && \
-    printf -- "/j nickserv identify %s\n" "$(<"$ircdir/$network/ident")" > "$ircdir/$network/in"
-rm -f "$ircdir/$network/nickserv/out" # clean that up - ident passwd is in there
+    # auth to services
+    [[ -e "$ircdir/$network/ident" ]] && \
+        printf -- "/j nickserv identify %s\n" "$(<"$ircdir/$network/ident")" > "$ircdir/$network/in"
+    rm -f "$ircdir/$network/nickserv/out" # clean that up - ident passwd is in there
 
-# join channels
-for channel in ${channels[@]}; do
-    printf -- "/j %s\n" "$channel" > "$ircdir/$network/in"
-    monitor $iid &
-    pids+=($!)
+    # join channels
+    for channel in ${networks[$network]} ; do
+        printf -- "/j %s\n" "$channel" > "$ircdir/$network/in"
+        monitor $iid &
+        pids+=($!)
+    done
 done
 
-channel="#builds"
-mc-chat $iid &
-pids+=($!)
-
-channel="#test"
-mc-connect $iid &
-pids+=($!)
+#channel="#builds"
+#mc-chat $iid &
+#pids+=($!)
+#
+#channel="#test"
+#mc-connect $iid &
+#pids+=($!)
