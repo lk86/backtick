@@ -62,7 +62,7 @@ mc-connect() {
 priv-mon() {
     tail -F -n0 --pid=$1 "$ircdir/$network/out" | \
         while read -r date time source 'msg'; do
-            if [[ "$source" == '-!-' ]] ; then
+            if [[ "$msg" =~ ^'`'(.*)'`'$ && "$source" == '-!-' ]] ; then
                 channel=${msg#\`}
                 channel=${channel%\`}
                 monitor $1 &
