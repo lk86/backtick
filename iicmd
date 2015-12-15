@@ -48,7 +48,13 @@ qdb() {
 }
 
 qgrep() {
-    tail `grep -ilh $1 $botdir/qdb/*`
+    file=$(grep -rilh $1 $botdir/qdb/)
+    if [[ $? -eq 0 ]]
+    then
+        cat $file
+    else
+        echo "QDB entry not found"
+    fi
 }
 
 case "$cmd" in
