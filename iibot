@@ -13,8 +13,8 @@ then
 fi
 
 [[ -v networks ]] || declare -A networks=(
-    [irc.sushigirl.tokyo]="#(•ө•)♡"
-    [irc.foonetic.net]="#builds #test #イヴの時間"
+    # [irc.sushigirl.tokyo]="#(•ө•)♡"
+    [irc.foonetic.net]="#builds #test #builds-mc"
 )
 
 # some privacy please, thanks
@@ -41,10 +41,16 @@ monitor() {
         done > "$ircdir/$network/$channel/in"
 }
 
-mc-chat() {
+mc-builds() {
     tail -F -n0 --pid=$1 "$botdir/mc-logs/chat.txt" | \
         while read -r date time nick 'msg'; do
             [[ $msg == \`* ]] && printf -- "%s %s \n" "$nick" "${msg#\`}"
+        done > "$ircdir/$network/$channel/in"
+}
+mc-chat() {
+    tail -F -n0 --pid=$1 "$botdir/mc-logs/chat.txt" | \
+        while read -r date time nick 'msg'; do
+            printf -- "%s %s \n" "$nick" "${msg#\`}"
         done > "$ircdir/$network/$channel/in"
 }
 mc-connect() {
@@ -52,6 +58,16 @@ mc-connect() {
         while read -r date time nick status ip; do
             printf -- "%s %s the server.\n" "$nick" "${status%\.}"
         done > "$ircdir/$network/$channel/in"
+}
+priv-mon() {
+    tail -F -n0 --pid=$1 "$ircdir/$network/out" | \
+        while read -r date time source 'msg'; do
+            if [[ "$source" == '-!-' ]] ; then
+                channel=${msg#\`}
+                channel=${channel%\`}
+                monitor $1 &
+            fi
+        done
 }
 
 for network in ${!networks[@]} ; do
@@ -74,15 +90,17 @@ for network in ${!networks[@]} ; do
     for channel in ${networks[$network]} ; do
         printf -- "/j %s\n" "$channel" > "$ircdir/$network/in"
         monitor $iid &
-        pids+=($!)
     done
 done
 
 network="irc.foonetic.net"
 channel="#builds"
-mc-chat $iid &
-pids+=($!)
+mc-builds $iid &
 
-channel="#test"
+channel="#builds-mc"
 mc-connect $iid &
-pids+=($!)
+mc-chat $iid &
+
+for network in ${!networks[@]} ; do
+    priv-mon $iid &
+done

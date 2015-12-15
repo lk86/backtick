@@ -47,6 +47,10 @@ qdb() {
     head -n1 $botdir/qdb/$date
 }
 
+qgrep() {
+    tail `grep -ilh $1 $botdir/qdb/*`
+}
+
 case "$cmd" in
     man)
         [[ -n "$nicks" ]] && printf -- "%s: %s\n" "$nicks" "${commands[*]}" || printf -- "%s: %s | " "$nick" "${commands[*]}"
@@ -65,7 +69,7 @@ case "$cmd" in
         qdb ${extra#/}
         ;;
     grep)
-        tail `grep -ilh ${extra#/} $botdir/qdb/*`
+        qgrep ${extra#/}
         ;;
     fortune)
         printf -- "%s\n" "$(fortune -osea)"
