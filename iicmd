@@ -42,16 +42,16 @@ qdb() {
         ((num=$1))
     fi
     date=`date +%s`
-    head -n-$first "$ircdir/$netw/$chan/out" | tail -n$num > $botdir/qdb/$date
+    head -n-$first "$ircdir/$netw/$chan/out" | tail -n$num > $botdir/qdb/$date.qdb
     printf -- "Added the %s messages starting with:\n" "$num"
-    head -n1 $botdir/qdb/$date
+    head -n1 $botdir/qdb/$date.qdb
 }
 
 qgrep() {
-    file=$(grep -rilh $1 $botdir/qdb/)
+    file="$(grep -rilh --include=[1-9]*.qdb $1 $botdir/qdb/)"
     if [[ $? -eq 0 ]]
     then
-        cat $file
+        tail $file
     else
         echo "QDB entry not found"
     fi
