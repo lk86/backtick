@@ -89,7 +89,7 @@ case "$cmd" in
     restart)
         if [[ "$nick" == \`lhk\` ]]
         then
-            ./iibot
+            ./iibot.sh
         else
             printf -- "%s: Fuck Off\n" "$nick"
         fi

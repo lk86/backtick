@@ -32,11 +32,11 @@ monitor() {
 
             # if msg contains a url, transform to url command
             [[ "$msg" =~ https?:// ]] && \
-                exec ./iicmd "$source" "url ${msg#* }" "$network" "$channel" | fold -w 255 &
+                exec ./iicmd.sh "$source" "url ${msg#* }" "$network" "$channel" | fold -w 255 &
             # if msg is a command, invoke iicmd
             if [[ "$msg" =~ ^'`'(.*)'`'$ || "$msg" =~ ^'$('(.*)')'$ ]] ; then
                 msg=${BASH_REMATCH[1]}
-                exec ./iicmd "$source" "$msg" "$network" "$channel" | fold -w 255 &
+                exec ./iicmd.sh "$source" "$msg" "$network" "$channel" | fold -w 255 &
             fi
         done > "$ircdir/$network/$channel/in"
 }
