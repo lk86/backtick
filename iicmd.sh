@@ -103,7 +103,7 @@ case "$cmd" in
         link="$(sed 's;.*youtube\..*v=\([^&]\+\).*;http://youtube.com/embed/\1;' <<< "$link")"
         link="$(sed 's;.*youtu\.be/\(.\+\);http://youtube.com/embed/\1;' <<< "$link")"
 
-        titl="$(curl -s "$link" | sed -n 's;.*<title>\([^<]*\)</title>.*;\1;p')"
+        titl="$(curl -s "$link" | sed -n 's;.*<title>\([^<]*\)</title>.*;\1;p' | tail -n1)"
         (( tiny )) && printf -- "%s :: %s\n" "$turl" "$titl" || printf -- "%s\n" "$titl"
         ;;
     whereami)
