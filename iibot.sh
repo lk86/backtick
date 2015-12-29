@@ -1,21 +1,10 @@
 #! /usr/bin/env bash
 
-: "${ircdir:=$HOME/backtick/ii-fifos}"
-: "${botdir:=$HOME/backtick}"
-: "${nickname:=\`}"
+. config.sh
 
 export ircdir botdir nickname
 
-if pgrep "ii" > /dev/null
-then
-    killall ii
-    sleep 5
-fi
-
-[[ -v networks ]] || declare -A networks=(
-    # [irc.sushigirl.tokyo]="#(•ө•)♡"
-    [irc.foonetic.net]="#builds #test #builds-mc"
-)
+botpid=$$
 
 # some privacy please, thanks
 chmod 700 "$ircdir"
@@ -89,18 +78,25 @@ for network in ${!networks[@]} ; do
     # join channels
     for channel in ${networks[$network]} ; do
         printf -- "/j %s\n" "$channel" > "$ircdir/$network/in"
-        monitor $iid &
+        monitor $botpid &
+        pids+=($!)
     done
 done
 
-network="irc.foonetic.net"
-channel="#builds"
-mc-builds $iid &
+if [[ -v mc_shit ]] ; then
+    network="irc.foonetic.net"
+    channel="#builds"
+    mc-builds $iid &
 
-channel="#builds-mc"
-mc-connect $iid &
-mc-chat $iid &
+    channel="#builds-mc"
+    mc-connect $iid &
+    mc-chat $iid &
 
-for network in ${!networks[@]} ; do
-    priv-mon $iid &
+    for network in ${!networks[@]} ; do
+        priv-mon $iid &
+    done
+fi
+
+for pid in "${pids[@]}" ; do
+    wait "$pid"
 done
