@@ -1,18 +1,12 @@
 #! /usr/bin/env bash
 
-: "${ircdir:=$HOME/backtick/ii-fifos}"
-: "${botdir:=$HOME/backtick}"
-: "${nickname:=\`}"
+. config.sh
 
 export ircdir botdir nickname
 
 botpid=$$
 
-[[ -v networks ]] || declare -A networks=(
-    # [irc.sushigirl.tokyo]="#(•ө•)♡"
-    [irc.foonetic.net]="#test"
-)
-
+[[ -v networks ]] || 
 # some privacy please, thanks
 chmod 700 "$ircdir"
 chmod 600 "$ircdir"/*/ident &>/dev/null
@@ -90,17 +84,19 @@ for network in ${!networks[@]} ; do
     done
 done
 
-network="irc.foonetic.net"
-channel="#builds"
-mc-builds $iid &
+if [[ -v mc_shit ]] ; then
+    network="irc.foonetic.net"
+    channel="#builds"
+    mc-builds $iid &
 
-channel="#builds-mc"
-mc-connect $iid &
-mc-chat $iid &
+    channel="#builds-mc"
+    mc-connect $iid &
+    mc-chat $iid &
 
-for network in ${!networks[@]} ; do
-    priv-mon $iid &
-done
+    for network in ${!networks[@]} ; do
+        priv-mon $iid &
+    done
+fi
 
 for pid in "${pids[@]}" ; do
     wait "$pid"
