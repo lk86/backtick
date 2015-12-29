@@ -27,7 +27,6 @@ commands=(
     grep
     fortune
     ping
-    url
     talkto
     whereami
 )
@@ -67,7 +66,7 @@ case "$cmd" in
     grep)
         file="$(grep -rilh --include=[1-9]*.qdb "${extra#/}" $botdir/qdb/)"
         if [[ $? -eq 0 ]]; then
-            tail "$file"
+            [[ "$chan" == \#builds ]] && tail "$file" || cat "$file"
         else
             echo "QDB entry not found"
         fi
@@ -87,25 +86,20 @@ case "$cmd" in
         fi
         ;;
     restart)
-        if [[ "$nick" == \`lhk\` ]]
-        then
-            ./iibot.sh
-        else
-            printf -- "%s: Fuck Off\n" "$nick"
-        fi
+        ./iibot.sh
         ;;
-    url)
-        link="$(sed 's;.*\(http[^ ]*\).*;\1;' <<< "$extra")"
+#    url)
+#        link="$(sed 's;.*\(http[^ ]*\).*;\1;' <<< "$extra")"
         #turl="$(curl -s "http://api.bitly.com/v3/shorten?login=pancakesbot&apiKey=R_ac2adceb07f01d8faca52bb77c67293b&longUrl=${link%#*}&format=txt")"
         #(( ${#link} > 80 )) && tiny=1 || tiny=0
 
         # handle youtube links
-        link="$(sed 's;.*youtube\..*v=\([^&]\+\).*;http://youtube.com/embed/\1;' <<< "$link")"
-        link="$(sed 's;.*youtu\.be/\(.\+\);http://youtube.com/embed/\1;' <<< "$link")"
-
-        titl="$(curl -s "$link" | sed -n 's;.*<title>\([^<]*\)</title>.*;\1;p' | tail -n1)"
-        (( tiny )) && printf -- "%s :: %s\n" "$turl" "$titl" || printf -- "%s\n" "$titl"
-        ;;
+#        link="$(sed 's;.*youtube\..*v=\([^&]\+\).*;http://youtube.com/embed/\1;' <<< "$link")"
+#        link="$(sed 's;.*youtu\.be/\(.\+\);http://youtube.com/embed/\1;' <<< "$link")"
+#
+#        titl="$(curl -s "$link" | sed -n 's;.*<title>\([^<]*\)</title>.*;\1;p' | head -n1)"
+#        (( tiny )) && printf -- "%s :: %s\n" "$turl" "$titl" || printf -- "%s\n" "$titl"
+#        ;;
     whereami)
         printf -- "%s: That's a damn good question. I'm gonna guess %s?\n" "$nick" "$chan"
         ;;

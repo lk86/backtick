@@ -31,8 +31,8 @@ monitor() {
             [[ "$source" == "$nickname" ]] && continue
 
             # if msg contains a url, transform to url command
-            [[ "$msg" =~ https?:// ]] && \
-                exec ./iicmd.sh "$source" "url ${msg#* }" "$network" "$channel" | fold -w 255 &
+#            [[ "$msg" =~ https?:// ]] && \
+#                exec ./iicmd.sh "$source" "url ${msg#* }" "$network" "$channel" | fold -w 255 &
             # if msg is a command, invoke iicmd
             if [[ "$msg" =~ ^'`'(.*)'`'$ || "$msg" =~ ^'$('(.*)')'$ ]] ; then
                 msg=${BASH_REMATCH[1]}
