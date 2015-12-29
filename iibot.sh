@@ -6,7 +6,6 @@ export ircdir botdir nickname
 
 botpid=$$
 
-[[ -v networks ]] || 
 # some privacy please, thanks
 chmod 700 "$ircdir"
 chmod 600 "$ircdir"/*/ident &>/dev/null
