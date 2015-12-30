@@ -1,10 +1,13 @@
 ircdir="$HOME/backtick/ii-fifos"
 botdir="$HOME/backtick"
-nickname="\`"
+nickname="ima-bot"
+#username="ima-bot"
+fullname="backtick-bot"
+
 
 declare -A networks=(
-    [irc.freenode.net]="#idefk"
-    [irc.foonetic.net]="#test #builds-mc"
+    [irc.freenode.net]="#linux"
 )
 
 #mc_shit="yes please"
+#ii_mod="yep"

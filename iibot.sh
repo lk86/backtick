@@ -19,9 +19,6 @@ monitor() {
             source="${source:1:-1}"
             [[ "$source" == "$nickname" ]] && continue
 
-            # if msg contains a url, transform to url command
-#            [[ "$msg" =~ https?:// ]] && \
-#                exec ./iicmd.sh "$source" "url ${msg#* }" "$network" "$channel" | fold -w 255 &
             # if msg is a command, invoke iicmd
             if [[ "$msg" =~ ^'`'(.*)'`'$ || "$msg" =~ ^'$('(.*)')'$ ]] ; then
                 msg=${BASH_REMATCH[1]}
@@ -30,41 +27,17 @@ monitor() {
         done > "$ircdir/$network/$channel/in"
 }
 
-mc-builds() {
-    tail -F -n0 --pid=$1 "$botdir/mc-logs/chat.txt" | \
-        while read -r date time nick 'msg'; do
-            [[ $msg == \`* ]] && printf -- "%s %s \n" "$nick" "${msg#\`}"
-        done > "$ircdir/$network/$channel/in"
-}
-mc-chat() {
-    tail -F -n0 --pid=$1 "$botdir/mc-logs/chat.txt" | \
-        while read -r date time nick 'msg'; do
-            printf -- "%s %s \n" "$nick" "${msg#\`}"
-        done > "$ircdir/$network/$channel/in"
-}
-mc-connect() {
-    tail -F -n0 --pid=$1 "$botdir/mc-logs/connections.txt" | \
-        while read -r date time nick status ip; do
-            printf -- "%s %s the server.\n" "$nick" "${status%\.}"
-        done > "$ircdir/$network/$channel/in"
-}
-priv-mon() {
-    tail -F -n0 --pid=$1 "$ircdir/$network/out" | \
-        while read -r date time source 'msg'; do
-            if [[ "$msg" =~ ^'`'(.*)'`'$ && "$source" == '-!-' ]] ; then
-                channel=${msg#\`}
-                channel=${channel%\`}
-                monitor $1 &
-            fi
-        done
-}
-
 for network in ${!networks[@]} ; do
     # cleanup
     rm -f "$ircdir/$network/in"
 
     # connect to network - password is set through the env var IIPASS
-    ii -i "$ircdir" -n "$nickname" -u "lhk-bot" -f "backtick" -k IIPASS -s "$network" &
+    iistart="ii -i $ircdir -n $nickname -f $fullname -k IIPASS -s $network "
+    if [[ -v ii_mod ]] ; then
+        $iistart -u "$username" &
+    else
+        $iistart &
+    fi
     iid="$!"
 
     # wait for the connection
@@ -84,17 +57,11 @@ for network in ${!networks[@]} ; do
 done
 
 if [[ -v mc_shit ]] ; then
-    network="irc.foonetic.net"
-    channel="#builds"
-    mc-builds $iid &
+    . mc.sh
+fi
 
-    channel="#builds-mc"
-    mc-connect $iid &
-    mc-chat $iid &
-
-    for network in ${!networks[@]} ; do
-        priv-mon $iid &
-    done
+if [[ -v ii_mod ]] ; then
+    . pm.sh
 fi
 
 for pid in "${pids[@]}" ; do
