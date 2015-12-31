@@ -48,9 +48,6 @@ case "$cmd" in
     bc)
         [[ -n "$extra" ]] && printf -- "%f\n" "$(bc -l <<< "$extra")"
         ;;
-    #echo)
-    #    [[ -n "$nicks" ]] && printf -- "%s: %s\n" "$nicks" "${extra#/}" || printf "%s\n" "${extra#/}"
-    #    ;;
     talkto)
         printf -- "@talk %s \n" "${extra#/}"
         ;;
@@ -80,20 +77,9 @@ case "$cmd" in
         fi
         ;;
     restart)
+        killall ii
         ./iibot.sh
         ;;
-#    url)
-#        link="$(sed 's;.*\(http[^ ]*\).*;\1;' <<< "$extra")"
-        #turl="$(curl -s "http://api.bitly.com/v3/shorten?login=pancakesbot&apiKey=R_ac2adceb07f01d8faca52bb77c67293b&longUrl=${link%#*}&format=txt")"
-        #(( ${#link} > 80 )) && tiny=1 || tiny=0
-
-        # handle youtube links
-#        link="$(sed 's;.*youtube\..*v=\([^&]\+\).*;http://youtube.com/embed/\1;' <<< "$link")"
-#        link="$(sed 's;.*youtu\.be/\(.\+\);http://youtube.com/embed/\1;' <<< "$link")"
-#
-#        titl="$(curl -s "$link" | sed -n 's;.*<title>\([^<]*\)</title>.*;\1;p' | head -n1)"
-#        (( tiny )) && printf -- "%s :: %s\n" "$turl" "$titl" || printf -- "%s\n" "$titl"
-#        ;;
     whereami)
         printf -- "%s: That's a damn good question. I'm gonna guess %s?\n" "$nick" "$chan"
         ;;
