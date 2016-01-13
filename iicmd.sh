@@ -24,6 +24,7 @@ commands=(
     man
     bc
     qdb
+    echo
     grep
     fortune
     ping
@@ -53,6 +54,10 @@ case "$cmd" in
         ;;
     qdb)
         qdb ${extra#/}
+        ;;
+    echo)
+        extra=$(sed -e 's/^[@|/|\!]/#/' <<< $extra)
+        [[ -n "$nicks" ]] && printf -- "%s: %s\n" "$nicks" "$extra" || printf "%s\n" "$extra"
         ;;
     grep)
         file="$(grep -rilh --include=[1-9]*.qdb "${extra#/}" $botdir/qdb/)"
