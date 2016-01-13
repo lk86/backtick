@@ -56,7 +56,7 @@ case "$cmd" in
         qdb ${extra#/}
         ;;
     echo)
-        extra=$(sed -e 's/^[@|/|\!]/#/' <<< $extra)
+        extra=$(sed -e 's/^[@|/|\!]/&/' <<< $extra)
         [[ -n "$nicks" ]] && printf -- "%s: %s\n" "$nicks" "$extra" || printf "%s\n" "$extra"
         ;;
     grep)
