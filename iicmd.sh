@@ -11,6 +11,15 @@ if [[ "$mesg" =~ .*\>.+ ]]; then
     read -r extra <<< "${extra%>*}"
 fi
 
+if [[ "$nicks" == "@all" ]]; then
+    printf -- "/names %s\n" "$chan"
+    nicks=""
+    while test -z "$nicks"; do # wait for the response
+        nicks="$(tail -n2 "$ircd/$netw/out" | grep "[[:digit:]-]\+ [[:digit:]:]\+ = $chan" | cut -d" " -f5-)"
+        sleep .5
+    done
+fi
+
 commands=(
     man
     bc
@@ -63,7 +72,7 @@ case "$cmd" in
         fi
         ;;
     ping)
-        printf -- "%s: pong!\n" "$nick"
+        [[ -n "$nicks" ]] && printf -- "%s: ping!\n" "$nicks" || printf -- "%s: pong!\n" "$nick"
         ;;
     die)
         if [[ "$nick" == '`lhk`' ]]
