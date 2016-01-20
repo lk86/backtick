@@ -16,13 +16,12 @@ monitor() {
             # if msg is by the system ignore it
             [[ "$source" == '-!-' ]] && continue
             # strip < and >. if msg is by ourself ignore it
-            source="${source:1:-1}"
-            [[ "$source" == "$nickname" ]] && continue
+            [[ "$source" == "<$nickname>" ]] && continue
 
             # if msg is a command, invoke iicmd
             if [[ "$msg" =~ ^'`'(.*)'`'$ || "$msg" =~ ^'$('(.*)')'$ ]] ; then
                 msg=${BASH_REMATCH[1]}
-                exec ./iicmd.sh "$source" "$msg" "$network" "$channel" | fold -w 255 &
+                exec ./iicmd.sh "${source:1:-1}" "$msg" "$network" "$channel" | fold -w 255 &
             fi
         done > "$ircdir/$network/$channel/in"
 }

@@ -4,9 +4,8 @@ priv-mon() {
     tail -F -n0 --pid=$1 "$ircdir/$network/out" | \
         while read -r date time source 'msg'; do
             if [[ "$msg" =~ ^'`'(.*)'`'$ && "$source" == '-!-' ]] ; then
-                channel=${msg#\`}
-                channel=${channel%\`}
-                monitor $1 &
+                channel=${BASH_REMATCH[1]}
+                [[ "$channel" =~ ' ' ]] || monitor $1 &
             fi
         done
 }
