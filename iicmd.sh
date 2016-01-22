@@ -58,8 +58,12 @@ case "$cmd" in
         printf -- "%s: pong!\n" "$nick"
         ;;
     w)
-        url="https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exsentences=2&exintro=&explaintext=&titles=${extra}"
-        url="$(sed -e 's/ /_/g' <<< ${url})"
-        printf -- "%s\n" "$(curl -s "${url}" | jq '.query.pages|keys[0] as $page|.[$page].extract')"
+        url="https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exsentences=4&exintro=&explaintext=&titles=$(sed -e 's/ /_/g' <<< ${extra})"
+        wiki="$(curl -s "${url}" | jq '.query.pages|keys[0] as $page|.[$page].extract')"
+        if [[ "$wiki" =~ '"'(.*)'\n' || "$msg" =~ '"'(.*)'"' ]] ; then
+            printf -- "%s\n" "${BASH_REMATCH[1]}"
+        else
+            printf -- "No results found for %s\n" "${extra}"
+        fi
         ;;
 esac
