@@ -49,7 +49,7 @@ help() {
             txt='Description: Prints link to desired google query. Usage: `g <query>` - replies with search link' ;;
         w)
             txt='Description: Queries en.wikipedia.org for a page, and returns a summary of the topic. Usage: `w <page>` - prints either the first 4 sentences or first graph (whichever is shorter) of wiki entry <page>' ;;
-       *)
+        *)
             txt='Command not found. This functionality is either not availible or not stable' ;;
 esac
 
@@ -94,9 +94,9 @@ case "$cmd" in
         printf -- "%s: http://www.lmgtfy.com/?q=%s\n" "${nick}" "${extra// /+}"
         ;;
     w)
-        url="https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exsentences=4&exintro=&explaintext=&titles="${extra// /_}""
+        url="https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exsentences=4&exintro=&explaintext=&titles=${extra// /_}"
         wiki="$(curl -s "${url}" | jq '.query.pages|keys[0] as $page|.[$page].extract')"
-        if [[ "${wiki}" =~ '"'(.*)'\n' || "${wiki}" =~ '"'(.*)'"' ]] ; then
+        if [[ "${wiki}" =~ '"'(+*)'\n' || "${wiki}" =~ '"'(+*)'"' ]] ; then
             printf -- "%s\n" "${BASH_REMATCH[1]}"
         else
             printf -- "No results found for %s, got: %s\n" "${extra}" "${wiki}"
