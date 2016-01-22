@@ -19,6 +19,8 @@ commands=(
     ping
     g
     w
+    u
+    cp
 )
 
 qdb() {
@@ -61,6 +63,10 @@ help() {
             txt='Description: Prints link to desired google query. Usage: `g <query>` - replies with search link' ;;
         w)
             txt='Description: Queries en.wikipedia.org for a page, and returns a summary of the topic. Usage: `w <page>` - prints either the first 4 sentences or first graph (whichever is shorter) of wiki entry <page>' ;;
+        u)
+            txt='Description: Search codepoints.net for unicode codepoints matching the name given.  Usage `u <search string>` - prints all matching characters, sorted numerically by codepoint, on one line' ;;
+        cp)
+            txt='Description: Queries codepoints.net for the name of the given unicode codepoint.  Usage `cp <hexadecimal codepoint>` - prints the name of the codepoint and then the character.' ;;
        *)
             txt='Command not found. This functionality is either not availible or not stable' ;;
 esac
