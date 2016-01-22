@@ -1,5 +1,6 @@
-ircdir="$HOME/backtick/ii-fifos"
 botdir="$HOME/backtick"
+ircdir="$botdir/ii-fifos"
+qdbdir="$botdir/qdb"
 nickname="ima-bot"
 #username="ima-bot"
 fullname="backtick-bot"
