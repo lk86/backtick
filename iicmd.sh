@@ -12,12 +12,14 @@ read -r cmd extra <<< "$mesg"
 commands=(
     man
     bc
-    qdb
-    echoA
-    grep
+    cp
+    echo
     fortune
+    grep
     ping
+    qdb
     g
+    u
     w
 )
 
@@ -31,7 +33,7 @@ qdb() {
 
 unicode() {
     curl -s 'http://codepoints.net/api/v1/search?na='"$1"''\
-        | jq -r '.result | sort | map([ . , 32 ]) | flatten | .[:-1] | implode'
+        | jq -r '.result | sort | implode' | sed 's/./& /g'
 }
 
 codepoint() {
