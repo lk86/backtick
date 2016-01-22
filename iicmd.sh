@@ -29,6 +29,18 @@ qdb() {
     head -1 $file
 }
 
+unicode() {
+    curl -s 'http://codepoints.net/api/v1/search?na='"$1"''\
+        | jq -r '.result | sort | map([ . , 32 ]) | flatten | .[:-1] | implode'
+}
+
+codepoint() {
+    cp="${1//[^0-9A-Fa-f]/}"
+    printf -- "%s: \u$cp\n"\
+        "$(curl -s 'http://codepoints.net/api/v1/codepoint/'$cp'?property=na'\
+            | jq -j .na)"
+}
+
 help() {
     case "$1" in
         man)
@@ -101,4 +113,10 @@ case "$cmd" in
         else
             printf -- "No results found for %s, got: %s\n" "${extra}" "${wiki}"
         fi ;;
+    u)
+        unicode ${extra}
+        ;;
+    cp)
+        codepoint ${extra}
+        ;;
 esac
