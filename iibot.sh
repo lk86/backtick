@@ -19,9 +19,9 @@ monitor() {
             [[ "$source" == "<$nickname>" ]] && continue
 
             # if msg is a command, invoke iicmd
-            if [[ "$msg" =~ ^'`'(.*)'`'$ || "$msg" =~ ^'$('(.*)')'$ ]] ; then
+            if [[ "$msg" =~ '`'(.*)'`' || "$msg" =~ '$('(.*)')' ]] ; then
                 msg=${BASH_REMATCH[1]}
-                exec ./iicmd.sh "${source:1:-1}" "$msg" "$network" "$channel" | fold -w 255 &
+                exec ./iicmd.sh "${source:1:-1}" "$msg" "$network" "$channel"
             fi
         done > "$ircdir/$network/$channel/in"
 }
