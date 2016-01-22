@@ -43,6 +43,8 @@ help() {
             txt='Description: Fortune cookie database interface. Usage: `fortune` - prints a random fortune from the database. | `fortune <pattern>` - prints the first 10 lines of matching fortune cookies' ;;
         ping)
             txt='Description: Test function to verify bot functionality. Usage: `ping` - replies "pong!"' ;;
+        g)
+            txt='Description: Prints link to desired google query. Usage: `g <query>` - replies with search link' ;;
         w)
             txt='Description: Queries en.wikipedia.org for a page, and returns a summary of the topic. Usage: `w <page>` - prints either the first 4 sentences or first graph (whichever is shorter) of wiki entry <page>' ;;
        *)
@@ -83,7 +85,10 @@ case "$cmd" in
             printf -- "%s\n" "$(fortune -sea)"
         fi ;;
     ping)
-        printf -- "%s: pong!\n" "$nick"
+        printf -- "%s: pong!\n" "${nick}"
+        ;;
+    g)
+        printf -- "%s: http://www.lmgtfy.com/?q=%s\n" "${nick}" "$(sed -e 's/ /\+/g' <<< ${extra})"
         ;;
     w)
         url="https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exsentences=4&exintro=&explaintext=&titles="$(sed -e 's/ /_/g' <<< ${extra})""
