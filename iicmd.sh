@@ -32,8 +32,8 @@ qdb() {
 }
 
 unicode() {
-    curl -s 'http://codepoints.net/api/v1/search?na='"$1"''\
-        | jq -r '.result | sort | implode' | sed 's/./& /g'
+    printf -- "%s\n" "$(curl -s 'http://codepoints.net/api/v1/search?na='"$1"''\
+        | jq -r '.result | sort | implode' | sed 's/./& /g')"
 }
 
 codepoint() {
@@ -110,7 +110,7 @@ case "$cmd" in
     w)
         url="https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exsentences=4&exintro=&explaintext=&titles=${extra// /_}"
         wiki="$(curl -s "${url}" | jq '.query.pages|keys[0] as $page|.[$page].extract')"
-        if [[ "${wiki}" =~ '"'(+*)'\n' || "${wiki}" =~ '"'(+*)'"' ]] ; then
+        if [[ "${wiki}" =~ '"'(.+)'\n' || "${wiki}" =~ '"'(.+)'"' ]] ; then
             printf -- "%s\n" "${BASH_REMATCH[1]}"
         else
             printf -- "No results found for %s, got: %s\n" "${extra}" "${wiki}"
