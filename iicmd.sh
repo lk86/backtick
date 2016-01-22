@@ -23,7 +23,8 @@ commands=(
 
 qdb() {
     file="$qdbdir/$(date +%s).qdb"
-    sed -ne '/'"$1"'/,$p' -e '/'"$2"'/q' "$ircdir/$netw/$chan/out" > "$file"
+    head -n-1 "$ircdir/$netw/$chan/out"\
+        | tac | sed "/$1/q" | tac | sed "/$2/q" > "$file"
     echo "Added the $(wc -l $file | cut -f1 -d' ') messages starting with:"
     head -1 $file
 }
