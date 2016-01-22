@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 
-. ./config.sh
-
 nick="$1"
 mesg="$2"
 netw="$3"
 chan="$4"
 
 read -r cmd extra <<< "$mesg"
+
+. ./config.sh
 
 commands=(
     man
