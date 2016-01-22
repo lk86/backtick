@@ -13,7 +13,7 @@ commands=(
     man
     bc
     qdb
-    echo
+    echoA
     grep
     fortune
     ping
@@ -70,7 +70,8 @@ case "$cmd" in
         qdb ${extra#/}
         ;;
     echo)
-        printf -- "%s\n" "$(sed -e 's/^[@/\!]/&/' <<< ${extra})"
+        [[ "${extra}" =~ ^[@/!] ]] && extra="${extra}"
+        printf -- "%s\n" "${extra}"
         ;;
     grep)
         file="$(grep -rilh --include=[1-9]*.qdb "${extra#/}" $qdbdir/)"
@@ -89,15 +90,14 @@ case "$cmd" in
         printf -- "%s: pong!\n" "${nick}"
         ;;
     g)
-        printf -- "%s: http://www.lmgtfy.com/?q=%s\n" "${nick}" "$(sed -e 's/ /\+/g' <<< ${extra})"
+        printf -- "%s: http://www.lmgtfy.com/?q=%s\n" "${nick}" "${extra// /+}"
         ;;
     w)
-        url="https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exsentences=4&exintro=&explaintext=&titles="$(sed -e 's/ /_/g' <<< ${extra})""
+        url="https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exsentences=4&exintro=&explaintext=&titles="${extra// /_}""
         wiki="$(curl -s "${url}" | jq '.query.pages|keys[0] as $page|.[$page].extract')"
         if [[ "${wiki}" =~ '"'(.*)'\n' || "${wiki}" =~ '"'(.*)'"' ]] ; then
             printf -- "%s\n" "${BASH_REMATCH[1]}"
         else
-            printf -- "No results found for %s, returned: %s\n" "${extra}" "${wiki}"
-        fi
-        ;;
+            printf -- "No results found for %s, got: %s\n" "${extra}" "${wiki}"
+        fi ;;
 esac
