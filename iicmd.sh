@@ -17,6 +17,7 @@ commands=(
     grep
     fortune
     ping
+    g
     w
 )
 
