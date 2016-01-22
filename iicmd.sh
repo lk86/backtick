@@ -15,7 +15,7 @@ commands=(
     grep
     fortune
     ping
-    whereami
+    w
 )
 
 qdb() {
@@ -57,8 +57,9 @@ case "$cmd" in
     ping)
         printf -- "%s: pong!\n" "$nick"
         ;;
-    whereami)
-        printf -- "%s: Seems like we're in %s.\n" "$nick" "$chan"
+    w)
+        url="https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exsentences=2&exintro=&explaintext=&titles=${extra}"
+        url="$(sed -e 's/ /_/g' <<< ${url})"
+        printf -- "%s\n" "$(curl -s "${url}" | jq '.query.pages|keys[0] as $page|.[$page].extract')"
         ;;
 esac
-
