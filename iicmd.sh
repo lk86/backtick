@@ -32,8 +32,7 @@ qdb() {
 }
 
 unicode() {
-    printf -- "%s\n" "$(curl -s 'http://codepoints.net/api/v1/search?na='"$1"''\
-        | jq -r '.result | sort | implode' | sed 's/./& /g')"
+    printf -- "%s\n" "$(curl -s 'http://codepoints.net/api/v1/search?na='"$1"'' | jq -r '.result | sort | implode' | sed 's/./& /g')"
 }
 
 codepoint() {
@@ -45,13 +44,13 @@ codepoint() {
 
 help() {
     case "$1" in
-        man)
+        man|help)
             txt='Description: Display help text. Usage: `man <command>` - prints help text for <command>. | `man` - prints command list and github link.' ;;
-        bc)
+        bc|calc)
             txt='Description: Perform calculations with GNU bc, the basic calculator. Usage: `bc <bc expression>` - prints one line of bc -lsq output, if calculation completes in <30 seconds' ;;
         qdb)
             txt='Description: Adds quotes to the quote database. Usage: `qdb <start regex> <end regex>` - adds messages sent between a message matching <start regex> and one matching <end message> inclusive to qdb' ;;
-        echo)
+        echo|print)
             txt='Description: Echoes back its input. Usage: `echo <string>` - prints <string>, sanitized to not trigger averybot, lurker, or ii' ;;
         grep)
             txt='Description: Searches for qdb entry matching a given pattern. Usage: `qdb <pattern>` - prints the last 10 lines of the first matching qdb entry found' ;;
@@ -59,9 +58,9 @@ help() {
             txt='Description: Fortune cookie database interface. Usage: `fortune` - prints a random fortune from the database. | `fortune <pattern>` - prints the first 10 lines of matching fortune cookies' ;;
         ping)
             txt='Description: Test function to verify bot functionality. Usage: `ping` - replies "pong!"' ;;
-        g)
+        g|google)
             txt='Description: Prints link to desired google query. Usage: `g <query>` - replies with search link' ;;
-        w)
+        w|wiki)
             txt='Description: Queries en.wikipedia.org for a page, and returns a summary of the topic. Usage: `w <page>` - prints either the first 4 sentences or first graph (whichever is shorter) of wiki entry <page>' ;;
         *)
             txt='Command not found. This functionality is either not availible or not stable' ;;
@@ -71,20 +70,20 @@ printf -- "%s\n" "${txt}"
 }
 
 case "$cmd" in
-    man)
+    man|help)
         if [[ -z "${extra}" ]]; then
             printf -- "Commands: %s | Source: https://github.com/lk86/backtick\n" "${commands[*]}"
         else
             help ${extra#/}
         fi ;;
-    bc)
+    bc|calc)
         export BC_LINE_LENGTH=0
         tail <<< "$nick: $(timeout 30 bc -lsq <<< "$extra")"
         ;;
     qdb)
         qdb ${extra#/}
         ;;
-    echo)
+    echo|print)
         [[ "${extra}" =~ ^[@/!] ]] && extra="${extra}"
         printf -- "%s\n" "${extra}"
         ;;
@@ -104,14 +103,15 @@ case "$cmd" in
     ping)
         printf -- "%s: pong!\n" "${nick}"
         ;;
-    g)
+    g|google)
         printf -- "%s: http://www.lmgtfy.com/?q=%s\n" "${nick}" "${extra// /+}"
         ;;
-    w)
+    w|wiki)
         url="https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exsentences=4&exintro=&explaintext=&titles=${extra// /_}"
         wiki="$(curl -s "${url}" | jq '.query.pages|keys[0] as $page|.[$page].extract')"
         if [[ "${wiki}" =~ '"'(.+)'\n' || "${wiki}" =~ '"'(.+)'"' ]] ; then
-            printf -- "%s\n" "${BASH_REMATCH[1]}"
+            printf -- "%s\n" "${BASH_REMATCH[1]//\\n/ }"
+            printf -- "https://en.wikipedia.org/wiki/%s\n" "${extra// /_}"
         else
             printf -- "No results found for %s, got: %s\n" "${extra}" "${wiki}"
         fi ;;
