@@ -61,7 +61,7 @@ help() {
         g|google)
             txt='Description: Prints link to desired google query. Usage: `g <query>` - replies with search link' ;;
         w|wiki)
-            txt='Description: Queries en.wikipedia.org for a page, and returns a summary of the topic. Usage: `w <page>` - prints either the first 4 sentences or first graph (whichever is shorter) of wiki entry <page>' ;;
+            txt='Description: Queries en.wikipedia.org for a page, and returns a summary of the topic. Usage: `w <page>` - prints either the first 4 sentences or first graph (whichever is shorter) of wiki entry <page> | `w` - prints that summary information for a random wiki page' ;;
         *)
             txt='Command not found. This functionality is either not availible or not stable' ;;
 esac
@@ -107,7 +107,12 @@ case "$cmd" in
         printf -- "%s: http://www.lmgtfy.com/?q=%s\n" "${nick}" "${extra// /+}"
         ;;
     w|wiki)
-        url="https://en.wikipedia.org/w/api.php?format=json&action=query&prop=extracts&exsentences=4&exintro=&explaintext=&titles=${extra// /_}"
+        if [[ -z "${extra}" ]]; then
+            url="https://en.wikipedia.org/w/api.php?format=json&action=query&list=random&rnnamespace=0&fnfilterredir=all&rnlimit=1"
+            extra="$(curl -s "${url}" | jq '.query.random[0].title')"
+            extra="${extra//\"/}"
+        fi
+        url="https://en.wikipedia.org/w/api.php?format=json&action=query&redirects=&prop=extracts&exsentences=4&exintro&explaintext=&titles=${extra// /_}"
         wiki="$(curl -s "${url}" | jq '.query.pages|keys[0] as $page|.[$page].extract')"
         if [[ "${wiki}" =~ '"'(.+)'\n' || "${wiki}" =~ '"'(.+)'"' ]] ; then
             printf -- "%s\n" "${BASH_REMATCH[1]//\\n/ }"
@@ -115,10 +120,10 @@ case "$cmd" in
         else
             printf -- "No results found for %s, got: %s\n" "${extra}" "${wiki}"
         fi ;;
-    u)
+    u|unicode)
         unicode ${extra}
         ;;
-    cp)
+    cp|codepoint)
         codepoint ${extra}
         ;;
 esac
