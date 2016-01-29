@@ -2,6 +2,8 @@
 
 . config.sh
 
+trap : SIGTERM SIGINT
+
 export ircdir botdir nickname
 
 botpid=$$
@@ -19,7 +21,7 @@ monitor() {
             [[ "$source" == "<$nickname>" ]] && continue
 
             # if msg is a command, invoke iicmd
-            if [[ "$msg" =~ '`'(.*)'`' || "$msg" =~ '$('(.*)')' ]] ; then
+            if [[ "$msg" =~ ^'`'(.*)'`' || "$msg" =~ ^'$('(.*)')' ]] ; then
                 msg=${BASH_REMATCH[1]}
                 exec ./iicmd.sh "${source:1:-1}" "$msg" "$network" "$channel" &
             fi
@@ -37,21 +39,20 @@ for network in ${!networks[@]} ; do
     else
         $iistart &
     fi
-    iid="$!"
+    pids+=($!)
 
     # wait for the connection
     while ! test -p "$ircdir/$network/in"; do sleep 1; done
 
     # auth to services
     [[ -e "$ircdir/$network/ident" ]] && \
-        printf -- "/j nickserv identify %s\n" "$(<"$ircdir/$network/ident")" > "$ircdir/$network/in"
+        printf -- "/j nickserv identify %s\n" "${pass}" > "$ircdir/$network/in"
     rm -f "$ircdir/$network/nickserv/out" # clean that up - ident passwd is in there
 
     # join channels
     for channel in ${networks[$network]} ; do
         printf -- "/j %s\n" "$channel" > "$ircdir/$network/in"
         monitor $botpid &
-        pids+=($!)
     done
 done
 
@@ -66,3 +67,10 @@ fi
 for pid in "${pids[@]}" ; do
     wait "$pid"
 done
+
+if [[ $? -gt 128 ]]
+then
+    for pid in "${pids[@]}" ; do
+        kill "$pid"
+    done
+fi
