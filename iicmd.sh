@@ -1,4 +1,3 @@
-#!/usr/bin/env bash
 
 nick="$1"
 mesg="$2"
@@ -96,9 +95,13 @@ case "$cmd" in
         fi ;;
     fortune)
         if [[ -n "$extra" ]]; then
-            tail <<< "$(fortune -sea -m "${extra#/}")"
+            cookie="$(timeout 3 fortune -isea -m "${extra#/}")"
+            cookie="${cookie%%\%*}"
+            cookie="${cookie//	/  }"
+            printf -- "%s\n" "${cookie:=Fortune cookie not found.}"
         else
-            printf -- "%s\n" "$(fortune -sea)"
+            cookie="$(fortune -sea)"
+            printf -- "%s\n" "${cookie//	/  }"
         fi ;;
     ping)
         printf -- "%s: pong!\n" "${nick}"
@@ -110,16 +113,20 @@ case "$cmd" in
         if [[ -z "${extra}" ]]; then
             url="https://en.wikipedia.org/w/api.php?format=json&action=query&list=random&rnnamespace=0&fnfilterredir=all&rnlimit=1"
             extra="$(curl -s "${url}" | jq '.query.random[0].title')"
+            # http://xkcd.com/234/
             extra="${extra//\"/}"
         fi
-        url="https://en.wikipedia.org/w/api.php?format=json&action=query&redirects=&prop=extracts&exsentences=4&exintro&explaintext=&titles=${extra// /_}"
-        wiki="$(curl -s "${url}" | jq '.query.pages|keys[0] as $page|.[$page].extract')"
-        if [[ "${wiki}" =~ '"'(.+)'\n' || "${wiki}" =~ '"'(.+)'"' ]] ; then
-            printf -- "%s\n" "${BASH_REMATCH[1]//\\n/ }"
-            printf -- "https://en.wikipedia.org/wiki/%s\n" "${extra// /_}"
+        url="https://en.wikipedia.org/w/api.php?format=json&action=opensearch&redirects=resolve&limit=1&search=${extra// /_}"
+        wiki="$(curl -s "${url}")"
+        page="$(jq '.[3][0]' <<< "$wiki")"
+        wiki="$(jq '.[2][0]' <<< "$wiki")"
+        if [[ "${wiki}" =~ '"'(.+)'"' ]] ; then
+            printf -- "%s\n" "${BASH_REMATCH[1]}"
+            printf -- "%s\n" "${page//\"/}"
         else
             printf -- "No results found for %s, got: %s\n" "${extra}" "${wiki}"
-        fi ;;
+        fi
+         ;;
     u|unicode)
         unicode ${extra}
         ;;
