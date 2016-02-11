@@ -2,7 +2,7 @@
 
 . config.sh
 
-trap : SIGTERM SIGINT
+trap "cleanup" SIGTERM SIGINT
 
 export ircdir botdir nickname
 
@@ -12,14 +12,29 @@ botpid=$$
 chmod 700 "$ircdir"
 chmod 600 "$ircdir"/*/ident &>/dev/null
 
+cleanup() {
+    echo
+    read -n 1 -rs -p "Kill ii's? (y/N)" choice
+    echo
+    case "$choice" in
+        y|Y)
+            kill ${pids[@]} ;;
+        *)
+            echo "pids+=\"${pids[@]}\"" >> pids
+            echo "${pids[@]}" ;;
+    esac
+}
+
+
 start_ii() {
+    echo "Starting ii..."
     network=$1
 
     # cleanup
     rm -f "$ircdir/$network/in"
 
     # connect to network
-    ${iistrings[$network]} &
+    ${iistrings[$network]} 2> >(tee -a "$ircdir/$admin/in" >&2) &
     pids+=($!)
 
     # wait for the connection
@@ -45,16 +60,18 @@ monitor() {
                 msg=${BASH_REMATCH[1]}
                 exec ./iicmd.sh "${source:1:-1}" "$msg" "$network" "$channel" &
             fi
-        done > "$ircdir/$network/$channel/in"
+        done > "$ircdir/$network/$channel/in" 2> >(tee -a "$ircdir/$admin/in" >&2)
 }
 
+if [[ -r pids ]] ; then
+    . pids
+    ii_running="true"
+    rm pids
+fi
+
 for network in ${!networks[@]} ; do
-    if [[ -r pids ]] ; then
-        . pids
-        rm pids
-    else
-        start_ii $network
-    fi
+    [[ $ii_running ]] || start_ii $network
+
     for channel in ${networks[$network]} ; do
         printf -- "/j %s\n" "$channel" > "$ircdir/$network/in"
         monitor $botpid &
@@ -69,21 +86,6 @@ if [[ -v pm ]] ; then
     . pm.sh
 fi
 
-wait
+echo "Bot is running."
 
-if [[ $? -gt 128 ]] ; then
-    echo
-    read -n 1 -rs -p "Kill ii's? (y/N)" choice
-    echo
-    case "$choice" in
-        y|Y )
-        for pid in "${pids[@]}" ; do
-            kill "$pid"
-        done ;;
-        * )
-        for pid in "${pids[@]}" ; do
-            echo "pids+=$pids" >> pids
-        done
-        echo "Exiting..." ;;
-    esac
-fi
+wait

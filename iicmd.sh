@@ -79,7 +79,7 @@ case "$cmd" in
         export BC_LINE_LENGTH=0
         tail <<< "$nick: $(timeout 30 bc -lsq <<< "$extra")"
         ;;
-    qdb)
+    q|qdb)
         qdb ${extra#/}
         ;;
     echo|print)
@@ -87,7 +87,7 @@ case "$cmd" in
         printf -- "%s\n" "${extra}"
         ;;
     grep)
-        file="$(grep -rilh --include=[1-9]*.qdb "${extra#/}" $qdbdir/)"
+        file="$(grep -rilh --include=[0-9]*.qdb "${extra#/}" $qdbdir/)"
         if [[ $? -eq 0 ]]; then
             tail "$file"
         else
@@ -95,7 +95,7 @@ case "$cmd" in
         fi ;;
     fortune)
         if [[ -n "$extra" ]]; then
-            cookie="$(timeout 3 fortune -isea -m "${extra#/}")"
+            cookie="$(timeout 3 fortune -ia -m "${extra#/}" 2> /dev/null)"
             cookie="${cookie%%\%*}"
             cookie="${cookie//	/  }"
             printf -- "%s\n" "${cookie:=Fortune cookie not found.}"
