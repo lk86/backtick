@@ -38,7 +38,7 @@ codepoint() {
     cp="${1//[^0-9A-Fa-f]/}"
     printf -- "%s: \u$cp\n"\
         "$(curl -s 'http://codepoints.net/api/v1/codepoint/'$cp'?property=na'\
-            | jq -j .na)"
+            | jq -r '.na')"
 }
 
 help() {
@@ -93,14 +93,14 @@ case "$cmd" in
         else
             echo "QDB entry not found"
         fi ;;
-    fortune)
+    4chan|fortune)
         if [[ -n "$extra" ]]; then
             cookie="$(timeout 3 fortune -ia -m "${extra#/}" 2> /dev/null)"
             cookie="${cookie%%\%*}"
             cookie="${cookie//	/  }"
             printf -- "%s\n" "${cookie:=Fortune cookie not found.}"
         else
-            cookie="$(fortune -sea)"
+            cookie="$([[ $cmd == '4chan' ]] && fortune -seo || fortune -se)"
             printf -- "%s\n" "${cookie//	/  }"
         fi ;;
     ping)
