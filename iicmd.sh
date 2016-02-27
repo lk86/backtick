@@ -41,6 +41,15 @@ codepoint() {
             | jq -r '.na')"
 }
 
+guf() {
+  case ${1#\$} in
+    adj|adv|noun|verb)
+      shuf -n1 "$botdir/dict/index.${1#\$}" | head -1 | cut -f1 -d" ";;
+    *)
+      echo "$1" ;;
+  esac
+}
+
 help() {
     case "$1" in
         man|help)
@@ -106,6 +115,16 @@ case "$cmd" in
     ping)
         printf -- "%s: pong!\n" "${nick}"
         ;;
+    mcguf) extra='$adj$ $noun$' ;&
+    say)
+        out=""
+        for w in $extra; do
+            [[ $w =~ (.*)'$'(.*)'$'(.*) ]] && \
+                w=${BASH_REMATCH[1]}$(guf ${BASH_REMATCH[2]})${BASH_REMATCH[3]}
+            out+="$w "
+        done
+        printf -- "%s \n" "$out"
+        ;;
     g|google)
         printf -- "%s: http://www.lmgtfy.com/?q=%s\n" "${nick}" "${extra// /+}"
         ;;
@@ -124,7 +143,7 @@ case "$cmd" in
             printf -- "%s\n" "${BASH_REMATCH[1]}"
             printf -- "%s\n" "${page//\"/}"
         else
-            printf -- "No results found for %s, got: %s\n" "${extra}" "${wiki}"
+            printf -- "No results found for %s.\n" "${extra}"
         fi
          ;;
     u|unicode)
