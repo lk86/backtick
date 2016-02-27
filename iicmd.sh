@@ -8,21 +8,10 @@ read -r cmd extra <<< "$mesg"
 
 . ./config.sh
 
-commands=(
-    man
-    bc
-    cp
-    echo
-    fortune
-    grep
-    ping
-    qdb
-    g
-    u
-    w
-)
+commands=( man bc cp echo fortune grep ping qdb google u wiki )
+re=("${BASH_REMATCH[@]}")
 
-qdb() {
+qdb() { # Takes two patterns as $1 and $2, adds the messages to a file
     file="$qdbdir/$(date +%s).qdb"
     head -n-1 "$ircdir/$netw/$chan/out"\
         | tac | sed "/$1/q" | tac | sed "/$2/q" > "$file"
@@ -41,6 +30,8 @@ codepoint() {
             | jq -r '.na')"
 }
 
+# Takes either a part of speech or any word
+# If PoS, return a random one, else return the input
 guf() {
   case ${1#\$} in
     adj|adv|noun|verb)
@@ -50,11 +41,24 @@ guf() {
   esac
 }
 
+rwiki() { # Takes no args, returns a random wiki page name
+      url="https://en.wikipedia.org/w/api.php?format=json&action=query&list=random&rnnamespace=0&fnfilterredir=all&rnlimit=1"
+      rand="$(curl -s "${url}" | jq '.query.random[0].title')"
+      # http://xkcd.com/234/
+      echo "${rand//\"/}"
+}
+
+pedia() { # Takes a wiki query as $1, returns the json search output
+    url="https://en.wikipedia.org/w/api.php?format=json&action=opensearch&redirects=resolve&limit=1&search=${1}"
+    echo "$(curl -s "${url}")"
+}
+
 case "$cmd" in
     man|help)
         if [[ -z "${extra}" ]]; then
             printf -- "Commands: %s | Source: https://github.com/lk86/backtick\n" "${commands[*]}"
         else
+            # Takes a command as $1 and prints its help text
             ./help.sh ${extra#/}
         fi ;;
     bc|calc)
@@ -88,13 +92,14 @@ case "$cmd" in
     ping)
         printf -- "%s: pong!\n" "${nick}"
         ;;
+    # McGuf Aliases:
     mcguf) extra='$adj$ $noun$' ;&
     say)
-        out=""
         for w in $extra; do
-            [[ $w =~ (.*)'$'(.*)'$'(.*) ]] && \
-                w=${BASH_REMATCH[1]}$(guf ${BASH_REMATCH[2]})${BASH_REMATCH[3]}
-            out+="$w "
+            if [[ $w =~ (.*)'$'(.*)'$'(.*) ]] ; then
+                re=("${BASH_REMATCH[@]}")
+                out+="${re[1]}$(guf ${re[2]})${re[3]} "
+            fi
         done
         printf -- "%s \n" "$out"
         ;;
@@ -102,19 +107,11 @@ case "$cmd" in
         printf -- "%s: http://www.lmgtfy.com/?q=%s\n" "${nick}" "${extra// /+}"
         ;;
     w|wiki)
-        if [[ -z "${extra}" ]]; then
-            url="https://en.wikipedia.org/w/api.php?format=json&action=query&list=random&rnnamespace=0&fnfilterredir=all&rnlimit=1"
-            extra="$(curl -s "${url}" | jq '.query.random[0].title')"
-            # http://xkcd.com/234/
-            extra="${extra//\"/}"
-        fi
-        url="https://en.wikipedia.org/w/api.php?format=json&action=opensearch&redirects=resolve&limit=1&search=${extra// /_}"
-        wiki="$(curl -s "${url}")"
-        page="$(jq '.[3][0]' <<< "$wiki")"
-        wiki="$(jq '.[2][0]' <<< "$wiki")"
-        if [[ "${wiki}" =~ '"'(.+)'"' ]] ; then
-            printf -- "%s\n" "${BASH_REMATCH[1]}"
-            printf -- "%s\n" "${page//\"/}"
+        [[ -z "${extra}" ]] && extra="$(rwiki)"
+        wiki=$(pedia "${extra// /_}")
+        if [[ "$(jq '.[2][0]' <<< "$wiki")" =~ '"'(.+)'"' ]] ; then
+            page="$(jq '.[3][0]' <<< "$wiki")"
+            printf -- "%s\n%s\n" "${BASH_REMATCH[1]}" "${page//\"/}"
         else
             printf -- "No results found for %s.\n" "${extra}"
         fi
