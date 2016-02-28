@@ -14,6 +14,8 @@ case "$1" in
         txt='Description: Fortune cookie database interface. Usage: `fortune` - prints a random fortune from the database. | `fortune <pattern>` - prints the first 10 lines of matching fortune cookies' ;;
     ping)
         txt='Description: Test function to verify bot functionality. Usage: `ping` - replies "pong!"' ;;
+    say)
+        txt='Description: Generates sentences based on input format. Usage: `say <format>` where <format> is any string. $adj$, $adv$, $noun$, $verb$ in format will replace $_$ with with a random word of type _' ;;
     g|google)
         txt='Description: Prints link to desired google query. Usage: `g <query>` - replies with search link' ;;
     w|wiki)

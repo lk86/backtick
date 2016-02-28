@@ -30,11 +30,15 @@ codepoint() {
             | jq -r '.na')"
 }
 
-# Takes either a part of speech or any word
-# If PoS, return a random one, else return the input
-guf() {
+cook() { # Takes in a fortune query as $1, returns the first result
+    out="$(timeout 3 fortune -ia -m "${1}" 2> /dev/null)"
+    out="${out%%\%*}"
+    echo "${out:=Fortune cookie not found.}"
+}
+
+guf() { # Takes either a part of speech or any word
   case ${1#\$} in
-    adj|adv|noun|verb)
+    adj|adv|noun|verb) # If PoS, return a random one, else return $1
       shuf -n1 "$botdir/dict/index.${1#\$}" | head -1 | cut -f1 -d" ";;
     *)
       echo "$1" ;;
@@ -44,8 +48,7 @@ guf() {
 rwiki() { # Takes no args, returns a random wiki page name
       url="https://en.wikipedia.org/w/api.php?format=json&action=query&list=random&rnnamespace=0&fnfilterredir=all&rnlimit=1"
       rand="$(curl -s "${url}" | jq '.query.random[0].title')"
-      # http://xkcd.com/234/
-      echo "${rand//\"/}"
+      echo "${rand//\"/}" # http://xkcd.com/234/
 }
 
 pedia() { # Takes a wiki query as $1, returns the json search output
@@ -79,16 +82,11 @@ case "$cmd" in
         else
             echo "QDB entry not found"
         fi ;;
+    # 4chan returns offensive fortunes.
     4chan|fortune)
-        if [[ -n "$extra" ]]; then
-            cookie="$(timeout 3 fortune -ia -m "${extra#/}" 2> /dev/null)"
-            cookie="${cookie%%\%*}"
-            cookie="${cookie//	/  }"
-            printf -- "%s\n" "${cookie:=Fortune cookie not found.}"
-        else
-            cookie="$([[ $cmd == '4chan' ]] && fortune -seo || fortune -se)"
-            printf -- "%s\n" "${cookie//	/  }"
-        fi ;;
+        cookie="$([[ -n "$extra" ]] && cook "${extra}" || [[ $cmd == '4chan' ]] && fortune -seo || fortune -se)"
+        printf -- "%s\n" "${cookie//	/  }"
+        ;;
     ping)
         printf -- "%s: pong!\n" "${nick}"
         ;;
@@ -96,10 +94,9 @@ case "$cmd" in
     mcguf) extra='$adj$ $noun$' ;&
     say)
         for w in $extra; do
-            if [[ $w =~ (.*)'$'(.*)'$'(.*) ]] ; then
-                re=("${BASH_REMATCH[@]}")
-                out+="${re[1]}$(guf ${re[2]})${re[3]} "
-            fi
+            [[ $w =~ (.*)'$'(.*)'$'(.*) ]]
+            re=("${BASH_REMATCH[@]}")
+            out+="${re[1]}$(guf ${re[2]})${re[3]} "
         done
         printf -- "%s \n" "$out"
         ;;
