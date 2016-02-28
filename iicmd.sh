@@ -37,7 +37,7 @@ cook() { # Takes in a fortune query as $1, returns the first result
 }
 
 guf() { # Takes either a part of speech or any word
-  case ${1#\$} in
+  case ${1} in
     adj|adv|noun|verb) # If PoS, return a random one, else return $1
       shuf -n1 "$botdir/dict/index.${1#\$}" | head -1 | cut -f1 -d" ";;
     *)
@@ -94,9 +94,11 @@ case "$cmd" in
     mcguf) extra='$adj$ $noun$' ;&
     say)
         for w in $extra; do
-            [[ $w =~ (.*)'$'(.*)'$'(.*) ]]
-            re=("${BASH_REMATCH[@]}")
-            out+="${re[1]}$(guf ${re[2]})${re[3]} "
+            if [[ $w =~ (.*)'$'(.*)'$'(.*) ]]; then
+                re=("${BASH_REMATCH[@]}")
+                w="${re[1]}$(guf ${re[2]})${re[3]}"
+            fi
+            out+="$w "
         done
         printf -- "%s \n" "$out"
         ;;
