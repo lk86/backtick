@@ -37,12 +37,12 @@ cook() { # Takes in a fortune query as $1, returns the first result
 }
 
 guf() { # Takes either a part of speech or any word
-  case ${1} in
-    adj|adv|noun|verb) # If PoS, return a random one, else return $1
-      shuf -n1 "$botdir/dict/index.${1#\$}" | head -1 | cut -f1 -d" ";;
-    *)
-      echo "$1" ;;
-  esac
+    case $1 in
+      adj|adv|noun|verb) # If PoS, return a random one, else return $1
+        shuf -n1 "$botdir/dict/index.${1}" | head -1 | cut -f1 -d" ";;
+      *)
+        echo "$1" ;;
+    esac
 }
 
 rwiki() { # Takes no args, returns a random wiki page name
@@ -88,19 +88,19 @@ case "$cmd" in
         printf -- "%s\n" "${cookie//	/  }"
         ;;
     ping)
-        printf -- "%s: pong!\n" "${nick}"
+        if [[ -n "$extra" ]]; then
+            IFS=$'\n' out=($(ping -c 4 -q "$extra" 2>&1))
+            printf -- "%s\n %s\n" "${out[0]}" "${out[2]}"
+        else
+            printf -- "%s: pong!\n" "${nick}"
+        fi
         ;;
     # McGuf Aliases:
-    mcguf) extra='$adj$ $noun$' ;&
+    love) [[ $cmd == 'love' ]] && extra='love is a $adj$ $noun$' ;&
+    mcguf) [[ $cmd == 'mcguf' ]] && extra='$adj$ $noun$' ;&
     say)
-        for w in $extra; do
-            if [[ $w =~ (.*)'$'(.*)'$'(.*) ]]; then
-                re=("${BASH_REMATCH[@]}")
-                w="${re[1]}$(guf ${re[2]})${re[3]}"
-            fi
-            out+="$w "
-        done
-        printf -- "%s \n" "$out"
+        IFS=$'$' extra=("$extra") # Split input on $'s
+        printf -- "%s\n" "$(for w in $extra; do echo -n "$(guf ${w})"; done)"
         ;;
     g|google)
         printf -- "%s: http://www.lmgtfy.com/?q=%s\n" "${nick}" "${extra// /+}"
