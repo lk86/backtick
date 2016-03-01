@@ -39,7 +39,8 @@ cook() { # Takes in a fortune query as $1, returns the first result
 guf() { # Takes either a part of speech or any word
     case $1 in
       adj|adv|noun|verb) # If PoS, return a random one, else return $1
-        shuf -n1 "$botdir/dict/index.${1}" | head -1 | cut -f1 -d" ";;
+        out="$(shuf -n1 "$botdir/dict/index.${1}")"
+        echo "${out%% *}";;
       *)
         echo "$1" ;;
     esac
@@ -47,13 +48,12 @@ guf() { # Takes either a part of speech or any word
 
 rwiki() { # Takes no args, returns a random wiki page name
       url="https://en.wikipedia.org/w/api.php?format=json&action=query&list=random&rnnamespace=0&fnfilterredir=all&rnlimit=1"
-      rand="$(curl -s "${url}" | jq '.query.random[0].title')"
-      echo "${rand//\"/}" # http://xkcd.com/234/
+      curl -s "${url}" | jq '.query.random[0].title' # http://xkcd.com/234/
 }
 
 pedia() { # Takes a wiki query as $1, returns the json search output
     url="https://en.wikipedia.org/w/api.php?format=json&action=opensearch&redirects=resolve&limit=1&search=${1}"
-    echo "$(curl -s "${url}")"
+    curl -s "${url}"
 }
 
 case "$cmd" in
@@ -84,7 +84,7 @@ case "$cmd" in
         fi ;;
     # 4chan returns offensive fortunes.
     4chan|fortune)
-        cookie="$([[ -n "$extra" ]] && cook "${extra}" || [[ $cmd == '4chan' ]] && fortune -seo || fortune -se)"
+        cookie="$([[ -n "${extra}" ]] && cook "${extra}" || [[ $cmd == '4chan' ]] && fortune -seo || fortune -se)"
         printf -- "%s\n" "${cookie//	/  }"
         ;;
     ping)
@@ -100,13 +100,13 @@ case "$cmd" in
     mcguf) [[ $cmd == 'mcguf' ]] && extra='$adj$ $noun$' ;&
     say)
         IFS=$'$' extra=("$extra") # Split input on $'s
-        printf -- "%s\n" "$(for w in $extra; do echo -n "$(guf ${w})"; done)"
+        printf -- "%s\n" "$(for w in $extra; do echo -n $(guf $w); done)"
         ;;
     g|google)
         printf -- "%s: http://www.lmgtfy.com/?q=%s\n" "${nick}" "${extra// /+}"
         ;;
     w|wiki)
-        [[ -z "${extra}" ]] && extra="$(rwiki)"
+        [[ -z "${extra}" ]] && extra="$(rwiki)" extra="${extra//\"/}"
         wiki=$(pedia "${extra// /_}")
         if [[ "$(jq '.[2][0]' <<< "$wiki")" =~ '"'(.+)'"' ]] ; then
             page="$(jq '.[3][0]' <<< "$wiki")"
