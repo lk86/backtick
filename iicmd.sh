@@ -38,15 +38,15 @@ cook() { # Takes in a fortune query as $1, returns the first result
 
 guf() { # Takes either a part of speech or any word
     case $1 in
-      adj|adv|noun|verb) # If PoS, return a random one, else return $1
-        out="$(shuf -n1 "$botdir/dict/index.${1}")" out="${out%% *}"
+      adj|adv|noun|verb|word) # If PoS, return a random one, else return $1
+        out="$(shuf -n1 "$botdir/dict/prince.${1}")"
         echo "${out//_/ }";;
-      "a adj"|"a adv"|"a noun"|"a verb")
-        out="$(shuf -n1 "$botdir/dict/index.${1##* }")" out="${out%% *}"
+      "a adj"|"a adv"|"a noun"|"a verb"|"a word")
+        out="$(shuf -n1 "$botdir/dict/prince.${1##* }")"
         [[ $out =~ ^[aeioux] ]] && an="n"
         echo "a${an} ${out//_/ }";;
-      adj:*|adv:*|noun:*|verb:*)
-        out="$(grep --color=never ${1##*:} "$botdir/dict/index.${1%%:*}" | shuf -n1)" out="${out%% *}"
+      adj:*|adv:*|noun:*|verb:*|word:*)
+        out="$(grep -x "${1##*:}" "$botdir/dict/prince.${1%%:*}" | shuf -n1)"
         echo "${out//_/ }";;
       *)
         echo "$1" ;;
@@ -107,12 +107,12 @@ case "$cmd" in
     love) [[ $cmd == 'love' ]] && extra='love is $a adj$ $noun$' ;&
     say)
         IFS=$'$' extra=("$extra") # Split input on $'s
-        out="$(for w in $extra; do echo -n $(guf $w); done)"
+        out="$(for w in $extra; do echo -n "$(guf $w)"; done)"
         if [[ $cmd =~ .*gram ]]; then
             spaces="${out//[^ ]/}"' ' spaces="${#spaces}"
-            gram=' | '"$(timeout 5 anagram -w "${spaces}" "${out}" | head -10 | shuf -n1)"
+            gram=' | '"$(timeout 5 anagram -w "${spaces}" -l 3 -d "$botdir/dict/prince.word" "${out}" | head -10 | shuf -n1)"
         fi
-        printf -- "%s%s\n" "${out[*]}" "${gram}"
+        printf -- "%s%s\n" "${out^}." "${gram}"
         ;;
     g|google)
         printf -- "%s: http://www.lmgtfy.com/?q=%s\n" "${nick}" "${extra// /+}"
