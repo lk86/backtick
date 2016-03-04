@@ -18,10 +18,12 @@ cleanup() {
     echo
     case "$choice" in
         y|Y)
-            kill ${pids[@]} ;;
+            kill ${pids[@]}
+            exit ;;
         *)
             echo "pids+=\"${pids[@]}\"" >> pids
-            echo "${pids[@]}" ;;
+            echo "${pids[@]}"
+            exit ;;
     esac
 }
 
@@ -60,7 +62,20 @@ monitor() {
                 msg=${BASH_REMATCH[1]}
                 exec ./iicmd.sh "${source:1:-1}" "$msg" "$network" "$channel" &
             fi
-        done > "$ircdir/$network/$channel/in" 2> >(tee -a "$ircdir/$admin/in" >&2)
+        done > "$ircdir/$network/$channel/in" 2> >(tee "$ircdir/$admin/in" >&2)
+}
+
+restart_ii() {
+    wait "${pids[-1]}"
+    kill "${pids[@]}"
+    while kill -0 "${pids[@]}" ; do sleep 2; done
+    pids=()
+    for network in ${!networks[@]} ; do
+        start_ii $network
+        for channel in ${networks[$network]} ; do
+            printf -- "/j %s\n" "$channel" > "$ircdir/$network/in"
+        done
+    done
 }
 
 if [[ -r pids ]] ; then
@@ -68,6 +83,7 @@ if [[ -r pids ]] ; then
     ii_running="true"
     rm pids
 fi
+
 
 for network in ${!networks[@]} ; do
     [[ $ii_running ]] || start_ii $network
@@ -88,4 +104,6 @@ fi
 
 echo "Bot is running."
 
-wait
+while echo "Waiting on ${pids[-1]}" ; do
+    restart_ii "${pids[-1]}"
+done
