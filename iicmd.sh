@@ -1,4 +1,3 @@
-
 nick="$1"
 mesg="$2"
 netw="$3"
@@ -8,45 +7,30 @@ read -r cmd extra <<< "$mesg"
 
 . ./config.sh
 
-commands=( man bc cp echo fortune grep ping qdb google u wiki )
-re=("${BASH_REMATCH[@]}")
+commands=( man bc echo fortune convo dont nn me mcguf say *gram \
+            ping google wiki paste )
 
-qdb() { # Takes two patterns as $1 and $2, adds the messages to a file
-    file="$qdbdir/$(date +%s).qdb"
-    head -n-1 "$ircdir/$netw/$chan/out"\
-        | tac | sed "/$1/q" | tac | sed "/$2/q" > "$file"
-    echo "Added the $(wc -l $file | cut -f1 -d' ') messages starting with:"
-    head -1 $file
-}
-
-unicode() {
-    printf -- "%s\n" "$(curl -s 'http://codepoints.net/api/v1/search?na='"$1"'' | jq -r '.result | sort | implode' | sed 's/./& /g')"
-}
-
-codepoint() {
-    cp="${1//[^0-9A-Fa-f]/}"
-    printf -- "%s: \u$cp\n"\
-        "$(curl -s 'http://codepoints.net/api/v1/codepoint/'$cp'?property=na'\
-            | jq -r '.na')"
+colorize() {
+    echo $(for w in ${*}; do echo -n "$(($RANDOM % 15))${w} "; done)
 }
 
 cook() { # Takes in a fortune query as $1, returns the first result
     out="$(timeout 3 fortune -ia -m "${1}" 2> /dev/null)"
-    out="${out%%\%*}"
+    out=$(echo $out | ./1line -i '%')
     echo "${out:=Fortune cookie not found.}"
 }
 
 guf() { # Takes either a part of speech or any word
     case $1 in
       adj|adv|noun|verb|word) # If PoS, return a random one, else return $1
-        out="$(shuf -n1 "$botdir/dict/prince.${1}")"
+        out="$(./1line -f "$botdir/dict/prince.${1}")"
         echo "${out//_/ }";;
       "a adj"|"a adv"|"a noun"|"a verb"|"a word")
-        out="$(shuf -n1 "$botdir/dict/prince.${1##* }")"
-        [[ $out =~ ^[aeioux] ]] && an="n"
+        out="$(./1line -f "$botdir/dict/prince.${1##* }")"
+        [[ $out =~ ^[aeiox] ]] || [[ $out =~ ^u.[^aeiou] ]] && an="n"
         echo "a${an} ${out//_/ }";;
       adj:*|adv:*|noun:*|verb:*|word:*)
-        out="$(grep -x "${1##*:}" "$botdir/dict/prince.${1%%:*}" | shuf -n1)"
+        out="$(./1line -r "^(${1##*:})$" -f "$botdir/dict/prince.${1%%:*}")"
         echo "${out//_/ }";;
       *)
         echo "$1" ;;
@@ -63,6 +47,8 @@ pedia() { # Takes a wiki query as $1, returns the json search output
     curl -s "${url}"
 }
 
+[[ "${cmd}" == "me" ]] && cmd="${nick}"
+
 case "$cmd" in
     man|help)
         if [[ -z "${extra}" ]]; then
@@ -75,24 +61,69 @@ case "$cmd" in
         export BC_LINE_LENGTH=0
         tail <<< "$nick: $(timeout 30 bc -lsq <<< "$extra")"
         ;;
-    q|qdb)
-        qdb ${extra#/}
-        ;;
     echo|print)
         [[ "${extra}" =~ ^[@/!] ]] && extra="${extra}"
         printf -- "%s\n" "${extra}"
         ;;
-    grep)
-        file="$(grep -rilh --include=[0-9]*.qdb "${extra#/}" $qdbdir/)"
-        if [[ $? -eq 0 ]]; then
-            tail "$file"
-        else
-            echo "QDB entry not found"
-        fi ;;
+    # Begin Personal Commands
+    '`')
+        [[ "${extra}" == "irl" ]] && \
+        echo "http://xkcd.com/1513/" ;;        
+    anachrome|ana|"[Awark")
+        [[ "${extra}" == "irl" ]] && \
+        #echo 'http://static.zerochan.net/Hachikuji.Mayoi.full.61988.jpg' ;;
+        echo 'https://sushigirl.tokyo/lewd/src/1450435125974-0.jpg #NSFW' ;;
+    lhk|'`lhk`'|'`QaosWug`'|\`*\`)
+        [[ "${extra}" == "irl" ]] && \
+        echo 'https://animereviewers.files.wordpress.com/2010/05/bakemonogatari-screenshot-episode-7_5.jpg' ;;
+    snut|Snut|george|andovan|sngruj)
+        case "${extra}" in
+            scroll|"") echo "@snut";;
+            fascism) echo "@george";;
+            irl) echo 'http://img.bato.to/comics/2011/09/11/e/read4e6c54d5e8c84/Elektel_Delusion_ch7_pg00f.jpg #NSFW' ;;
+        esac ;;    
     # 4chan returns offensive fortunes.
     4chan|fortune)
-        cookie="$([[ -n "${extra}" ]] && cook "${extra}" || [[ $cmd == '4chan' ]] && fortune -seo || fortune -se)"
-        printf -- "%s\n" "${cookie//	/  }"
+        cookie=($([[ $cmd == '4chan' ]] && fortune -seo || fortune -se))
+        [[ -n "${extra}" ]] && cookie=($(cook "${extra}"))
+        echo `printf -- "%s " "${cookie[*]//	/  }"`
+        ;;
+    convo|convolve|convolut*)
+        if [[ -n "$extra" ]]; then
+            out="$(./1line -r "$extra" -f ./convo.db)"
+            echo "${out:=No matching convo found.}"
+        else
+            echo "$(./1line -f ./convo.db)"
+        fi ;;
+    convo*)
+        convo=$(./1line -f ./convo.db)
+        [[ -n "$extra" ]] &&  convo=$(./1line -r "$extra" -f ./convo.db)
+        colorize $convo
+        ;;
+    dont)
+        echo -n "`< dont.db`|$extra" > dont.db 
+        echo "$extra will be redacted from this point forward.";;
+    nn*)
+        if [[ -n "$extra" ]]; then
+            out=$(./1line -r "$extra" -f ./nn.txt) && out="${out:=No matching line found}"
+            echo "${out//`< dont.db`/REDACTED}" | iconv -c -t UTF-8
+        else
+            out=$(./1line -f ./nn.txt)
+            echo "${out//`< dont.db`/REDACTED}" | iconv -c -t UTF-8
+        fi ;;
+    # McGuf Aliases:
+    what*) [[ $cmd == 'what'* ]] && extra=${extra:='love'}' is $a adj$ $noun$' 
+        extra="${extra^}." ;&
+    mcguf|*gram) extra=${extra:='$adj$ $noun$'} ;&
+    say)
+        IFS=$'$' extra=("$extra") # Split input on $'s
+        out="$(for w in $extra; do echo -n "$(guf $w)"; done)"
+        if [[ $cmd =~ .*gram ]]; then
+            spaces="${out//[^ ]/}"' ' spaces="${#spaces}"
+            gram=' | '"$(timeout 8 anagram -w "${spaces}" -l 3 -d "/usr/share/dict/words" "${out}" | ./1line -n 20)"
+        fi
+        [[ "${out}" =~ ^[@/!] ]] && out="${out}"
+        printf -- "%s%s\n" "${out}" "${gram}"
         ;;
     ping)
         if [[ -n "$extra" ]]; then
@@ -100,20 +131,13 @@ case "$cmd" in
             printf -- "%s\n %s\n" "${out[0]}" "${out[2]}"
         else
             printf -- "%s: pong!\n" "${nick}"
-        fi
-        ;;
-    # McGuf Aliases:
-    mcguf|saygram|gufgram) extra=${extra:='$adj$ $noun$'} ;&
-    love) [[ $cmd == 'love' ]] && extra='love is $a adj$ $noun$' ;&
-    say)
-        IFS=$'$' extra=("$extra") # Split input on $'s
-        out="$(for w in $extra; do echo -n "$(guf $w)"; done)"
-        if [[ $cmd =~ .*gram ]]; then
-            spaces="${out//[^ ]/}"' ' spaces="${#spaces}"
-            gram=' | '"$(timeout 5 anagram -w "${spaces}" -l 3 -d "$botdir/dict/prince.word" "${out}" | head -10 | shuf -n1)"
-        fi
-        printf -- "%s%s\n" "${out^}." "${gram}"
-        ;;
+        fi ;;
+    paste)
+        exec 3<>/dev/tcp/lpaste.net/80
+        echo -ne "GET /browse HTTP/1.1\r\nHost: lpaste.net\r\nAccept: */*\r\nConnection: close\r\n\r\n" >&3
+        sed -nE 's/^.*a href="(\/[0-9]{6})".*$/\1/p' <&3
+        exec 3>&-
+        echo "http://lpaste.net$guy" ;;
     g|google)
         printf -- "%s: http://www.lmgtfy.com/?q=%s\n" "${nick}" "${extra// /+}"
         ;;
@@ -125,12 +149,5 @@ case "$cmd" in
             printf -- "%s\n%s\n" "${BASH_REMATCH[1]}" "${page//\"/}"
         else
             printf -- "No results found for %s.\n" "${extra}"
-        fi
-         ;;
-    u|unicode)
-        unicode ${extra}
-        ;;
-    cp|codepoint)
-        codepoint ${extra}
-        ;;
+        fi ;;
 esac
