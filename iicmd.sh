@@ -15,9 +15,11 @@ colorize() {
 }
 
 cook() { # Takes in a fortune query as $1, returns the first result
-    out="$(timeout 3 fortune -ia -m "${1}" 2> /dev/null)"
-    out=$(echo $out | ./1line -i '%')
-    echo "${out:=Fortune cookie not found.}"
+    if [[ -n "${1}" ]]; then 
+        timeout 3 fortune -ia -m "${1}" 2> /dev/null | ./1line -i '%'
+    else
+        [[ $cmd == '4chan' ]] && fortune -seo || fortune -se
+    fi 
 }
 
 guf() { # Takes either a part of speech or any word
@@ -75,7 +77,10 @@ case "$cmd" in
         echo 'https://sushigirl.tokyo/lewd/src/1450435125974-0.jpg #NSFW' ;;
     lhk|'`lhk`'|'`QaosWug`'|\`*\`)
         [[ "${extra}" == "irl" ]] && \
-        echo 'https://animereviewers.files.wordpress.com/2010/05/bakemonogatari-screenshot-episode-7_5.jpg' ;;
+        echo "https://pbs.twimg.com/media/Ckx9qjZUkAAlcDq.jpg:large" ;;
+    Lan*)
+        [[ "${extra}" == "irl" ]] && \
+        echo 'https://i.imgur.com/T6CdK3O.jpg' ;;
     snut|Snut|george|andovan|sngruj)
         case "${extra}" in
             scroll|"") echo "@snut";;
@@ -84,9 +89,10 @@ case "$cmd" in
         esac ;;    
     # 4chan returns offensive fortunes.
     4chan|fortune)
-        cookie=($([[ $cmd == '4chan' ]] && fortune -seo || fortune -se))
-        [[ -n "${extra}" ]] && cookie=($(cook "${extra}"))
-        echo `printf -- "%s " "${cookie[*]//	/  }"`
+        cookie=$(cook "$extra")
+        readarray -t cookie \
+            <<< ${cookie:="Fortune cookie not found."}
+        echo "${cookie[*]//[$'\t']/  }"
         ;;
     convo|convolve|convolut*)
         if [[ -n "$extra" ]]; then
@@ -98,7 +104,7 @@ case "$cmd" in
     convo*)
         convo=$(./1line -f ./convo.db)
         [[ -n "$extra" ]] &&  convo=$(./1line -r "$extra" -f ./convo.db)
-        colorize $convo
+        colorize ${convo:=No matching convo found.}
         ;;
     dont)
         echo -n "`< dont.db`|$extra" > dont.db 
